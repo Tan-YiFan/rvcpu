@@ -1,0 +1,193 @@
+stages:
+  - chk_scala
+  - sim_src
+  - run_sim
+  - fpga_src
+  - bit_gen
+  - fpga_eval
+
+variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    GIT_DEPTH: "1"
+
+default:
+  image: gitlab.agileserve.org.cn:15050/liushiqi/xs-env:v2.0
+  tags: 
+    - k8s
+
+scala_check:
+  stage: chk_scala
+  script:
+    - mill chiselModule.compile
+
+create_emu:
+  stage: sim_src
+  script:
+    - export NOOP_HOME=$(pwd)
+    - mkdir -p build
+    - cp -r vsrc/* build
+    - make EMU_TRACE=1 emu
+  needs:
+    - scala_check
+  artifacts:
+    name: "$CI_JOB_STAGE-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
+    when: always
+    paths:
+      - build
+
+coremark:
+  stage: run_sim
+  script:
+    - export NOOP_HOME=$(pwd)
+    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/coremark/build/coremark-riscv64-nutshell.bin | tee ${NOOP_HOME}/build/sim.txt || true
+    - export SIM_TIME=$(awk '/Guest cycle spent:/{print $5}' ${NOOP_HOME}/build/sim.txt)
+    - bash -c "if grep -q 'HIT GOOD TRAP' ${NOOP_HOME}/build/sim.txt; then echo "Succeeded!"; else ${NOOP_HOME}/build/emu -b $(expr ${SIM_TIME} - 1000) -e ${SIM_TIME} --dump-wave -i ${AM_HOME}/apps/coremark/build/coremark-riscv64-nutshell.bin 2> /dev/null; exit 1; fi"
+  needs:
+    - create_emu
+  artifacts:
+    name: "$CI_JOB_STAGE-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
+    when: on_failure
+    paths:
+      - build
+
+dhrystone:
+  stage: run_sim
+  script:
+    - export NOOP_HOME=$(pwd)
+    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/dhrystone/build/dhrystone-riscv64-nutshell.bin | tee ${NOOP_HOME}/build/sim.txt || true
+    - export SIM_TIME=$(awk '/Guest cycle spent:/{print $5}' ${NOOP_HOME}/build/sim.txt)
+    - bash -c "if grep -q 'HIT GOOD TRAP' ${NOOP_HOME}/build/sim.txt; then echo "Succeeded!"; else ${NOOP_HOME}/build/emu -b $(expr ${SIM_TIME} - 1000) -e ${SIM_TIME} --dump-wave -i ${AM_HOME}/apps/dhrystone/build/dhrystone-riscv64-nutshell.bin 2> /dev/null; exit 1; fi"
+  needs:
+    - create_emu
+  artifacts:
+    name: "$CI_JOB_STAGE-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
+    when: on_failure
+    paths:
+      - build
+
+microbench:
+  stage: run_sim
+  script:
+    - export NOOP_HOME=$(pwd)
+    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/microbench/build/microbench-riscv64-nutshell.bin | tee ${NOOP_HOME}/build/sim.txt || true
+    - export SIM_TIME=$(awk '/Guest cycle spent:/{print $5}' ${NOOP_HOME}/build/sim.txt)
+    - bash -c "if grep -q 'HIT GOOD TRAP' ${NOOP_HOME}/build/sim.txt; then echo "Succeeded!"; else ${NOOP_HOME}/build/emu -b $(expr ${SIM_TIME} - 1000) -e ${SIM_TIME} --dump-wave -i ${AM_HOME}/apps/microbench/build/microbench-riscv64-nutshell.bin 2> /dev/null; exit 1; fi"
+  needs:
+    - create_emu
+  artifacts:
+    name: "$CI_JOB_STAGE-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
+    when: on_failure
+    paths:
+      - build
+
+rt-thread:
+  stage: run_sim
+  allow_failure: true
+  script:
+    - export NOOP_HOME=$(pwd)
+    - ./build/emu -b 0 -e 0 -i ready-to-run/rtthread.bin --no-diff | tee ${NOOP_HOME}/build/sim.txt || true
+    - export SIM_TIME=$(awk '/Guest cycle spent:/{print $5}' ${NOOP_HOME}/build/sim.txt)
+    - bash -c "if grep -q 'HIT GOOD TRAP' ${NOOP_HOME}/build/sim.txt; then echo "Succeeded!"; else ${NOOP_HOME}/build/emu -b $(expr ${SIM_TIME} - 1000) -e ${SIM_TIME} --dump-wave -i ready-to-run/rtthread.bin 2> /dev/null; exit 1; fi"
+  needs:
+    - create_emu
+  artifacts:
+    name: "$CI_JOB_STAGE-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
+    when: on_failure
+    paths:
+      - build
+
+create_verilog:
+  stage: fpga_src
+  script:
+    - export NOOP_HOME=$(pwd)
+    - mkdir -p build
+    - cp -r vsrc/* build
+    - make BOARD=nf_card verilog
+  needs:
+    - scala_check
+  artifacts:
+    name: "$CI_JOB_STAGE-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
+    when: always
+    paths:
+      - build
+
+copy_fpga_am:
+  stage: fpga_src
+  script:
+    - mkdir -p build
+    - cp ${AM_HOME}/apps/coremark/build/coremark-riscv64-nutshell_nf.elf build
+    - cp ${AM_HOME}/apps/dhrystone/build/dhrystone-riscv64-nutshell_nf.elf build
+    - cp ${AM_HOME}/apps/microbench/build/microbench-riscv64-nutshell_nf.elf build
+  needs: []
+  artifacts:
+    name: "$CI_JOB_STAGE-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
+    when: on_success
+    paths:
+      - build
+
+bit_gen:
+  stage: bit_gen
+  image: gitlab.agileserve.org.cn:15050/zelin/vivado-ci-tools/vivado-vnc-ci-multistage:v2.7
+  script:
+    - export PATH=${PATH}:/opt/Xilinx_2019.1/Vivado/2019.1/bin
+    - make -C fpga PRJ=project BOARD=nf_card STANDALONE=true DUT_FREQ=100 GEN_BITSTREAM=true
+  needs:
+    - create_verilog
+  artifacts:
+    name: "$CI_JOB_STAGE-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
+    when: on_success
+    paths:
+      - fpga/board/nf_card/build/role.bit
+      - fpga/board/nf_card/build/role.bit.bin
+      - fpga/board/nf_card/build/role.bit.prm
+      - fpga/board/nf_card/build/debug_nets.ltx
+      - fpga/board/nf_card/build/report
+
+fpga_coremark:
+  stage: fpga_eval
+  tags:
+    - nf_xvc
+  script:
+    - mkdir -p build
+    - chmod +x scripts/fpga_run.sh
+    - bash -c "scripts/fpga_run.sh coremark"
+  needs:
+    - bit_gen
+    - copy_fpga_am
+
+fpga_dhrystone:
+  stage: fpga_eval
+  tags:
+    - nf_xvc
+  script:
+    - mkdir -p build
+    - chmod +x scripts/fpga_run.sh
+    - bash -c "scripts/fpga_run.sh dhrystone"
+  needs:
+    - bit_gen
+    - copy_fpga_am
+
+fpga_microbench:
+  stage: fpga_eval
+  tags:
+    - nf_xvc
+  script:
+    - mkdir -p build
+    - chmod +x scripts/fpga_run.sh
+    - bash -c "scripts/fpga_run.sh microbench"
+  needs:
+    - bit_gen
+    - copy_fpga_am
+
+fpga_rtthread:
+  stage: fpga_eval
+  tags:
+    - nf_xvc
+  script:
+    - mkdir -p build
+    - chmod +x scripts/fpga_run.sh
+    - bash -c "scripts/fpga_run.sh rtthread"
+  needs:
+    - bit_gen
+    - copy_fpga_am
+  
