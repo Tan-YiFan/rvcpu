@@ -16,7 +16,8 @@ module memory
 	forward_intf.memory forward,
 	// exception_intf.memory exception,
 	output mread_req mread,
-	output mwrite_req mwrite/* verilator split_var */,
+	/* verilator lint_off UNOPTFLAT */
+	output mwrite_req mwrite,
 	input word_t rd
 
 );

@@ -62,7 +62,8 @@ module execute
         .mult_ok(hazard.mult_ok)
 	);
 
-	execute_data_t dataE/* verilator split_var */;
+	/* verilator lint_off UNOPTFLAT */
+	execute_data_t dataE;
 	assign dataE.instr = ereg.dataD.instr;
 	// assign dataE.aluout = ereg.dataD.instr.ctl.is_link ? (ereg.dataD.pc + 64'd4) : aluout;
 	always_comb begin

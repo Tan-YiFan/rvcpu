@@ -62,8 +62,8 @@ module decode
 	);
 	assign branch_taken = branch_taken_temp & instr.ctl.branch;
 
-	
-	decode_data_t dataD/* verilator split_var */;
+	/* verilator lint_off UNOPTFLAT */
+	decode_data_t dataD;
 	assign dataD.instr = instr;
 	assign dataD.pc = dreg.dataF.pc;
 	assign dataD.rd1 = rd1;
