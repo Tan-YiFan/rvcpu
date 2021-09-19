@@ -42,6 +42,28 @@ module core
 
 	mread_req mread;
 	mwrite_req mwrite;
+	u64 imin, imax;
+	u64 dmin, dmax;
+	always_ff @(posedge clk) begin
+		if (reset) begin
+			imin <= 64'h8000_0000;
+			imax <= 64'h8000_0000;
+			dmin <= 64'h8010_0000;
+			dmax <= 64'h8000_0000;
+		end else begin
+			if (ireq.addr[31]) begin
+				if (ireq.addr < imin) imin <= ireq.addr;
+				if (ireq.addr > imax) imax <= ireq.addr;
+			end
+			if (dreq.addr[31:28] == 4'd8 && dreq.valid) begin
+				if (dreq.addr < dmin) dmin <= dreq.addr;
+				if (dreq.addr > dmax) dmax <= dreq.addr;
+			end
+			if (ireq.addr == 64'h8000478c) $display("imin %x, imax %x, dmin %x, dmax %x", imin, imax, dmin, dmax);
+		end
+	end
+	
+
 
 	assign ireq.addr = pc;
 	assign ireq.valid = 1'b1;
