@@ -35,6 +35,7 @@ module divider(
 		endcase
 	end
 	u128 p, p_nxt;
+	u64 b_nxt;
 	always_comb begin
 		p_nxt = p;
 		unique case(state)
@@ -43,8 +44,8 @@ module divider(
 			end
 			DOING: begin
 				p_nxt = {p_nxt[126:0], 1'b0};
-				if (p_nxt[127:64] >= b) begin
-					p_nxt[127:64] -= b;
+				if (p_nxt[127:64] >= b_nxt) begin
+					p_nxt[127:64] -= b_nxt;
 					p_nxt[0] = 1'b1;
 				end
 			end
@@ -53,8 +54,11 @@ module divider(
 	always_ff @(posedge clk) begin
 		if (reset | ~valid) begin
 			p <= '0;
+			b_nxt <= '0;
 		end else begin
 			p <= p_nxt;
+			if (state == INIT)
+			b_nxt <= b;
 		end
 	end
 	assign c = p;

@@ -38,8 +38,8 @@ module hazard
 	assign self.stallM = ~d_data_ok;
 
 	assign self.flushD = flush_ex | (self.branch_taken & ~self.stallD);
-	assign self.flushE = ((lwstall | branchstall | ~i_data_ok) & self.mult_ok);
-	assign self.flushM = ~self.mult_ok | (flush_ex & i_data_ok);
+	assign self.flushE = ((lwstall | branchstall | ~i_data_ok) & self.mult_ok & d_data_ok);
+	assign self.flushM = (~self.mult_ok & d_data_ok) | (flush_ex & i_data_ok);
 	assign self.flushW = ~d_data_ok;
 endmodule
 

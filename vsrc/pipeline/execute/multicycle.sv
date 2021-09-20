@@ -49,7 +49,7 @@ module multicycle (
 		endcase
 	end
 
-	localparam MULT_DELAY = 3;
+	localparam MULT_DELAY = 2;
 	localparam DIV_DELAY = 65;
 	localparam type state_t = enum logic {INIT, DOING};
 	state_t state, state_nxt;
@@ -98,7 +98,11 @@ module multicycle (
 	end : multicycle_counter
 	assign mult_ok = state_nxt == INIT;
 	
-
+	// always_ff @(posedge clk) begin
+		// if (~reset && state == INIT && is_multdiv && mult_type != MULT_MUL && mult_type != MULT_MULW)
+			// $display("a %x, b %x", a, b);
+	// end
+	
 endmodule
 
 

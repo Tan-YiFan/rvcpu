@@ -219,7 +219,12 @@ package common;
  /**
   * cache bus: simplified burst AXI transaction interface
   */
- 
+  typedef enum i2 {
+	AXI_BURST_FIXED = '0,
+	AXI_BURST_INCR,
+	AXI_BURST_WRAP,
+	AXI_BURST_RESERVED
+} axi_burst_type_t;
  typedef struct packed {
      logic    valid;     // in request?
      logic    is_write;  // is it a write transaction?
@@ -228,6 +233,7 @@ package common;
      strobe_t strobe;    // which bytes are enabled?
      word_t   data;      // the data to write
      mlen_t   len;       // number of bursts
+	 axi_burst_type_t burst;
  } cbus_req_t;
  
  typedef struct packed {
@@ -240,12 +246,7 @@ package common;
   * AXI-related typedefs
   */
  
- typedef enum i2 {
-     AXI_BURST_FIXED,
-     AXI_BURST_INCR,
-     AXI_BURST_WRAP,
-     AXI_BURST_RESERVED
- } axi_burst_type_t;
+
 
  typedef struct packed {
 	u1 valid;

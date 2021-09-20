@@ -8,6 +8,8 @@
 `include "util/DBusToCBus.sv"
 `include "util/CBusArbiter.sv"
 
+`include "cache/ICache.sv"
+
 module VTop 
 	import common::*;(
 	input logic clk, reset,
@@ -24,7 +26,8 @@ module VTop
     cbus_resp_t icresp, dcresp;
 
     core core(.*);
-    IBusToCBus icvt(.*);
+    // IBusToCBus icvt(.*);
+	ICache ICache(.creq(icreq), .cresp(icresp), .*);
     DBusToCBus dcvt(.*);
 
     /**
@@ -35,6 +38,14 @@ module VTop
         .iresps({icresp, dcresp}),
         .*
     );
+
+	always_ff @(posedge clk) begin
+		if (~reset) begin
+			// $display("icreq %x, %x", icreq.valid, icreq.addr);
+			// $display("oreq %x, %x", oreq.valid, oreq.addr);
+		end
+	end
+	
 
 endmodule
 

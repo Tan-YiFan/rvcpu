@@ -1,5 +1,6 @@
 `include "include/common.sv"
 `include "util/CBusToAXI.sv"
+`include "util/CBusToSRAM.sv"
 
 module mycpu_top
 	import common::*;(
@@ -48,23 +49,33 @@ module mycpu_top
 `ifdef FPGA
 	CBusToAXI cvt(.creq(oreq), .cresp(oresp), .*);
 `else
-	u64 bit_wen;
-	for (genvar i = 0; i < 8; i++) begin
-		assign bit_wen[i * 8 + 7 -: 8] = {8{oreq.strobe[i]}};
-	end
+	u64 rIdx;
+	u64 rdata1;
+	u64 wIdx;
+	u64 wdata1;
+	u64 wmask;
+	logic wen;
+	logic en;
+
+	CBusToSRAM CBusToSRAM(.clk(aclk), .reset(areset), .rdata(rdata1), .wdata(wdata1), .*);
+	RAMHelper RAMHelper(.clk(aclk), .rdata(rdata1), .wdata(wdata1), .*);
+	// u64 bit_wen;
+	// for (genvar i = 0; i < 8; i++) begin
+	// 	assign bit_wen[i * 8 + 7 -: 8] = {8{oreq.strobe[i]}};
+	// end
 	
-	RAMHelper RAMHelper (
-	.clk(aclk),
-	.rIdx({38'b0, oreq.addr[28:3]}), // 0 -> 0, 8 -> 1
-	.rdata(oresp.data),
-	.wIdx({38'b0, oreq.addr[28:3]}),
-	.wdata(oreq.data),
-	.wmask(bit_wen),
-	.wen(oreq.addr[31]),
-	.en(oreq.valid && oreq.addr[31])
-      );
-      assign oresp.last = 1'b1;
-      assign oresp.ready = 1'b1;
+	// RAMHelper RAMHelper (
+	// .clk(aclk),
+	// .rIdx({38'b0, oreq.addr[28:3]}), // 0 -> 0, 8 -> 1
+	// .rdata(oresp.data),
+	// .wIdx({38'b0, oreq.addr[28:3]}),
+	// .wdata(oreq.data),
+	// .wmask(bit_wen),
+	// .wen(oreq.addr[31]),
+	// .en(oreq.valid && oreq.addr[31])
+    //   );
+    //   assign oresp.last = 1'b1;
+    //   assign oresp.ready = 1'b1;
 
       always_ff @(posedge aclk) begin
 	      if(0)
