@@ -1,6 +1,8 @@
 `ifndef COMMON_SV
 `define COMMON_SV
+`ifdef VERILATOR
 `include "include/config.sv"
+`endif
 import config_pkg::*;
 package common;
 	// parameters
