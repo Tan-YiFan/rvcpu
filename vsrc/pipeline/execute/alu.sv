@@ -1,7 +1,11 @@
 
 `ifndef __ALU_SV
 `define __ALU_SV
+`ifdef VERILATOR
 `include "include/interface.svh"
+`else
+`include "interface.svh"
+`endif
 
 module alu
 	import common::*;

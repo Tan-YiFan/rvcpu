@@ -2,7 +2,11 @@
 `define __CSR_SV
 
 
+`ifdef VERILATOR
 `include "include/interface.svh"
+`else
+`include "interface.svh"
+`endif
 
 module csr
 	import common::*;
@@ -44,6 +48,7 @@ module csr
 
 	// write
 	always_comb begin
+		regs_nxt = regs;
 		regs_nxt.mcycle = regs.mcycle + 1;
 		// Writeback: W stage
 		unique if (self.valid) begin

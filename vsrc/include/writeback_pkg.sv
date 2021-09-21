@@ -1,9 +1,11 @@
 `ifndef __WRITEBACK_PKG_SV
 `define __WRITEBACK_PKG_SV
 
+`ifdef VERILATOR
 `include "include/common.sv"
 `include "include/config.sv"
 `include "include/decode_pkg.sv"
+`endif
 package writeback_pkg;
 	import common::*;
 	import decode_pkg::*;

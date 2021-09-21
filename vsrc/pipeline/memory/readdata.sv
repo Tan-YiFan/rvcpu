@@ -2,7 +2,11 @@
 `define __READDATA_SV
 
 
+`ifdef VERILATOR
 `include "include/interface.svh"
+`else
+`include "interface.svh"
+`endif
 
 module readdata
 	import common::*;

@@ -1,7 +1,9 @@
 `ifndef __MULTIPLIER_32X32_SV
 `define __MULTIPLIER_32X32_SV
 
+`ifdef VERILATOR
 `include "include/interface.svh"
+`endif
 
 module multiplier_32x32 (
 	input logic clk, reset,

@@ -1,7 +1,11 @@
 `ifndef __DIVIDER_SV
 `define __DIVIDER_SV
 
+`ifdef VERILATOR
 `include "include/interface.svh"
+`else
+`include "interface.svh"
+`endif
 module divider(
 	input logic clk, reset, valid,
 	input u64 a, b,

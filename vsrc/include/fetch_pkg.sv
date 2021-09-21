@@ -1,8 +1,9 @@
 `ifndef __FETCH_PKG_SV
 `define __FETCH_PKG_SV
 
+`ifdef VERILATOR
 `include "include/common.sv"
-
+`endif
 package fetch_pkg;
 	import common::*;
 	typedef struct packed {

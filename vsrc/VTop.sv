@@ -1,7 +1,7 @@
 `ifndef __VTOP_SV
 `define __VTOP_SV
 
-
+`ifdef VERILATOR
 `include "include/common.sv"
 `include "pipeline/core.sv"
 `include "util/IBusToCBus.sv"
@@ -9,7 +9,7 @@
 `include "util/CBusArbiter.sv"
 
 `include "cache/ICache.sv"
-
+`endif
 module VTop 
 	import common::*;(
 	input logic clk, reset,

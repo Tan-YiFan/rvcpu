@@ -1,8 +1,11 @@
 `ifndef __DECODER_SV
 `define __DECODER_SV
 
-
+`ifdef VERILATOR
 `include "include/interface.svh"
+`else
+`include "interface.svh"
+`endif
 
 module decoder 
 	import common::*;
@@ -49,7 +52,7 @@ module decoder
 	control_t ctl;
 
 	always_comb begin
-		op = '0;
+		op = decoded_op_t'(0);
 		ctl = '0;
 		unique case(raw_op)
 			OP_R: begin

@@ -1,10 +1,13 @@
 `ifndef __MEMORY_SV
 `define __MEMORY_SV
 
-
+`ifdef VERILATOR
 `include "include/interface.svh"
 `include "pipeline/memory/writedata.sv"
 
+`else
+`include "interface.svh"
+`endif
 module memory
 	import common::*;
 	import memory_pkg::*;

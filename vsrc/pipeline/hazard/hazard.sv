@@ -2,8 +2,11 @@
 `define __HAZARD_SV
 
 
-
+`ifdef VERILATOR
 `include "include/interface.svh"
+`else
+`include "interface.svh"
+`endif
 module hazard 
     import common::*;(
     hazard_intf.hazard self,

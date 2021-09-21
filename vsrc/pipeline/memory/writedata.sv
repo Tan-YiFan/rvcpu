@@ -2,7 +2,11 @@
 `define __WRITEDATA_SV
 
 
+`ifdef VERILATOR
 `include "include/interface.svh"
+`else
+`include "interface.svh"
+`endif
 
 module writedata
 	import common::*;

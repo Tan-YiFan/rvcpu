@@ -1,9 +1,13 @@
 `ifndef __DECODE_SV
 `define __DECODE_SV
 
+`ifdef VERILATOR
 `include "include/interface.svh"
 `include "pipeline/decode/decoder.sv"
 `include "pipeline/execute/bru.sv"
+`else
+`include "interface.svh"
+`endif
 
 module decode 
 	import common::*;

@@ -2,7 +2,11 @@
 `define __PIPEREG_SV
 
 
+`ifdef VERILATOR
 `include "include/interface.svh"
+`else
+`include "interface.svh"
+`endif
 
 module pipereg
     import common::*; #(

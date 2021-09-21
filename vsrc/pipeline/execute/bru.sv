@@ -2,7 +2,11 @@
 `define __BRU_SV
 
 
+`ifdef VERILATOR
 `include "include/interface.svh"
+`else
+`include "interface.svh"
+`endif
 
 module bru 
 	import common::*;

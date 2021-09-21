@@ -1,9 +1,11 @@
 `ifndef __PCSELECT_SV
 `define __PCSELECT_SV
 
-
+`ifdef VERILATOR
 `include "include/interface.svh"
-
+`else
+`include "interface.svh"
+`endif
 module pcselect
 	import common::*;
 	(

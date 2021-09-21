@@ -1,10 +1,13 @@
 `ifndef __WRITEBACK_SV
 `define __WRITEBACK_SV
 
-
+`ifdef VERILATOR
 `include "include/interface.svh"
 `include "pipeline/memory/readdata.sv"
 
+`else
+`include "interface.svh"
+`endif
 module writeback
     import common::*;
     import writeback_pkg::*;

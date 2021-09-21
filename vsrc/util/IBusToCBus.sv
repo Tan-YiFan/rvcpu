@@ -4,7 +4,8 @@
 
 `include "include/interface.svh"
 
-module IBusToCBus (
+module IBusToCBus 
+    import common::*;(
     input  ibus_req_t  ireq,
     output ibus_resp_t iresp,
     output cbus_req_t  icreq,

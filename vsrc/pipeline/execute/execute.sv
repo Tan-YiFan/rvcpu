@@ -1,9 +1,13 @@
 `ifndef __EXECUTE_SV
 `define __EXECUTE_SV
 
+`ifdef VERILATOR
 `include "include/interface.svh"
 `include "pipeline/execute/alu.sv"
 `include "pipeline/execute/multicycle.sv"
+`else
+`include "interface.svh"
+`endif
 module execute
 	import common::*;
 	import decode_pkg::*;

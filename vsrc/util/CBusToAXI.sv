@@ -1,8 +1,9 @@
 `ifndef __CBUSTOAXI_SV
 `define __CBUSTOAXI_SV
 
+`ifdef VERILATOR
 `include "include/common.sv"
-
+`endif
 /**
  * interconnect with cache bus & AXI.
  *

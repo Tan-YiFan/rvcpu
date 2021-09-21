@@ -1,8 +1,12 @@
 `ifndef __DIVIDER_TOP_SV
 `define __DIVIDER_TOP_SV
 
+`ifdef VERILATOR
 `include "include/interface.svh"
 `include "pipeline/execute/div/divider.sv"
+`else
+`include "interface.svh"
+`endif
 module divider_top
 	import common::*;(
 	input logic clk, reset,

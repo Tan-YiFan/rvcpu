@@ -1,8 +1,11 @@
 `ifndef __FORWARD_SV
 `define __FORWARD_SV
 
-
+`ifdef VERILATOR
 `include "include/interface.svh"
+`else
+`include "interface.svh"
+`endif
 module forward
     import common::*; 
     import forward_pkg::*;(

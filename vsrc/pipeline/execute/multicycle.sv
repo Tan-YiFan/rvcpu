@@ -1,10 +1,13 @@
 `ifndef __MULTICYCLE_SV
 `define __MULTICYCLE_SV
 
+`ifdef VERILATOR
 `include "include/interface.svh"
 `include "pipeline/execute/div/divider_top.sv"
 `include "pipeline/execute/mult/multiplier_top.sv"
-
+`else
+`include "interface.svh"
+`endif
 module multicycle (
 	input logic clk, reset,
 	input u64 a, b,

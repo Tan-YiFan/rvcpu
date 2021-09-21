@@ -1,9 +1,11 @@
 `ifndef __DBUSTOCBUS_SV
 `define __DBUSTOCBUS_SV
 
-
+`ifdef VERILATOR
 `include "include/interface.svh"
-
+`else
+`include "interface.svh"
+`endif
 /**
  * NOTE: CBus does not support byte write enable mask (write_en).
  */
@@ -21,7 +23,7 @@ module DBusToCBus (
     assign dcreq.strobe   =  dreq.strobe;
     assign dcreq.data     =  dreq.data;
     assign dcreq.len      =  MLEN1;
-	assign dcreq.burst = '0;
+	assign dcreq.burst = AXI_BURST_FIXED;
 
     logic okay;
     assign okay = dcresp.ready && dcresp.last;

@@ -2,9 +2,12 @@
 `define __MULTIPLIER_TOP_SV
 
 
-
+`ifdef VERILATOR
 `include "include/interface.svh"
 `include "pipeline/execute/mult/multiplier_32x32.sv"
+`else
+`include "interface.svh"
+`endif
 // FIXME: MULH not supported
 module multiplier_top (
 	input logic clk, reset,

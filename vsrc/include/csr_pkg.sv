@@ -1,6 +1,9 @@
 `ifndef __CSR_PKG_SV
 `define __CSR_PKG_SV
+
+`ifdef VERILATOR
 `include "include/common.sv"
+`endif
 package csr_pkg;
 	import common::*;
 

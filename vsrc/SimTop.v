@@ -1,6 +1,8 @@
 
 `include "defines.sv"
+`ifdef VERILATOR
 `include "mycpu_top.sv"
+`endif
 `define AXI_TOP_INTERFACE(name) io_memAXI_0_``name
 
 module SimTop(

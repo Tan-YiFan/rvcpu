@@ -1,7 +1,7 @@
 `ifndef __INTERFACE_SVH
 `define __INTERFACE_SVH
 
-
+`ifdef VERILATOR
 `include "include/fetch_pkg.sv"
 `include "include/decode_pkg.sv"
 `include "include/execute_pkg.sv"
@@ -9,6 +9,7 @@
 `include "include/writeback_pkg.sv"
 `include "include/forward_pkg.sv"
 `include "include/csr_pkg.sv"
+`endif
 
 import common::*;
 import fetch_pkg::*;

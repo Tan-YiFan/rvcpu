@@ -1,10 +1,15 @@
+`ifdef VERILATOR
 `include "include/common.sv"
 `include "util/CBusToAXI.sv"
 `include "util/CBusToSRAM.sv"
-
+`endif
 module mycpu_top
 	import common::*;(
 	input logic aclk, areset,
+`ifdef VERILATOR
+	output                              io_uart_out_valid,
+    output [7:0]                        io_uart_out_ch,
+`endif
 
 	output logic [3 :0] arid,
 	output logic [63:0] araddr,
@@ -46,7 +51,7 @@ module mycpu_top
 	cbus_resp_t oresp;
 
 	VTop top(.clk(aclk), .reset(areset), .*);
-`ifdef FPGA
+`ifndef VERILATOR
 	CBusToAXI cvt(.creq(oreq), .cresp(oresp), .*);
 `else
 	u64 rIdx;
@@ -59,6 +64,8 @@ module mycpu_top
 
 	CBusToSRAM CBusToSRAM(.clk(aclk), .reset(areset), .rdata(rdata1), .wdata(wdata1), .*);
 	RAMHelper RAMHelper(.clk(aclk), .rdata(rdata1), .wdata(wdata1), .*);
+	assign io_uart_out_valid = oreq.valid && oreq.addr == 64'h40600004 && oreq.is_write;
+	assign io_uart_out_ch = oreq.data[39-:8];
 	// u64 bit_wen;
 	// for (genvar i = 0; i < 8; i++) begin
 	// 	assign bit_wen[i * 8 + 7 -: 8] = {8{oreq.strobe[i]}};

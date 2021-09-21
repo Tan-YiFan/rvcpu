@@ -1,6 +1,6 @@
 `ifndef __CORE_SV
 `define __CORE_SV
-
+`ifdef VERILATOR
 `include "include/interface.svh"
 `include "pipeline/fetch/pcselect.sv"
 `include "pipeline/fetch/fetch.sv"
@@ -13,6 +13,10 @@
 `include "pipeline/regfile/regfile.sv"
 `include "pipeline/regfile/pipereg.sv"
 `include "pipeline/csr/csr.sv"
+
+`else
+`include "interface.svh"
+`endif
 
 module core 
 	import common::*;
@@ -187,7 +191,7 @@ module core
 		.en(1'b1)
 	);
 
-`ifndef COMPILE_ONLY
+`ifdef VERILATOR
 	// u1 commit_valid;
 	// assign commit_valid = writeback.pc[31:28] == 4'd8;
 	DifftestInstrCommit DifftestInstrCommit(

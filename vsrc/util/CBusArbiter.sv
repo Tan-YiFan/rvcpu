@@ -1,9 +1,11 @@
 `ifndef __CBUSARBITER_SV
 `define __CBUSARBITER_SV
 
-
+`ifdef VERILATOR
 `include "include/interface.svh"
-
+`else
+`include "interface.svh"
+`endif
 /**
  * this implementation is not efficient, since
  * it adds one cycle lantency to all requests.

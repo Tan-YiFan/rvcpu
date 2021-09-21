@@ -2,9 +2,11 @@
 `define __FETCH_SV
 
 
-
+`ifdef VERILATOR
 `include "include/interface.svh"
-
+`else
+`include "interface.svh"
+`endif
 module fetch 
 	import common::*;
 	import fetch_pkg::*;

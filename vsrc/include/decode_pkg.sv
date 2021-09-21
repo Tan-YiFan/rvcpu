@@ -1,7 +1,9 @@
 `ifndef DECODE_PKG_SV
 `define DECODE_PKG_SV
 
+`ifdef VERILATOR
 `include "include/common.sv"
+`endif
 package decode_pkg;
 	import common::*;
 

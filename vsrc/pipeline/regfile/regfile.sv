@@ -1,7 +1,10 @@
 `ifndef __REGFILE_SV
 `define __REGFILE_SV
-
+`ifdef VERILATOR
 `include "include/interface.svh"
+`else
+`include "interface.svh"
+`endif
 module regfile 
 	import common::*;
 	#(
@@ -28,6 +31,7 @@ module regfile
 	
 	for (genvar i = 1; i < 32; i++) begin
 		always_comb begin
+			regs_nxt[i] = regs[i];
 			for (int j = 0; j < WRITE_PORTS; j++) begin
 				if (i == self.wa[j] && self.valid[j]) begin
 					regs_nxt[i] = self.wd[j];

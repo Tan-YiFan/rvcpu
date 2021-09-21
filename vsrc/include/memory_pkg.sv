@@ -1,9 +1,10 @@
 `ifndef __MEMORY_PKG_SV
 `define __MEMORY_PKG_SV
 
+`ifdef VERILATOR
 `include "include/common.sv"
 `include "include/decode_pkg.sv"
-
+`endif
 package memory_pkg;
 	import common::*;
 	import decode_pkg::*;
