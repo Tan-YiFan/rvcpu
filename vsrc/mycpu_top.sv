@@ -64,8 +64,8 @@ module mycpu_top
 
 	CBusToSRAM CBusToSRAM(.clk(aclk), .reset(areset), .rdata(rdata1), .wdata(wdata1), .*);
 	RAMHelper RAMHelper(.clk(aclk), .rdata(rdata1), .wdata(wdata1), .*);
-	assign io_uart_out_valid = oreq.valid && oreq.addr == 64'h40600004 && oreq.is_write;
-	assign io_uart_out_ch = oreq.data[39-:8];
+	// assign io_uart_out_valid = oreq.valid && oreq.addr == 64'h40600004 && oreq.is_write;
+	// assign io_uart_out_ch = oreq.data[39-:8];
 	// u64 bit_wen;
 	// for (genvar i = 0; i < 8; i++) begin
 	// 	assign bit_wen[i * 8 + 7 -: 8] = {8{oreq.strobe[i]}};

@@ -60,11 +60,12 @@ module core
 			// 	if (ireq.addr > imax) imax <= ireq.addr;
 			// end
 			if (dreq.addr[31:28] == 4'd8 && dreq.valid) begin
-				if (dreq.addr < dmin) dmin <= dreq.addr;
-				if (dreq.addr > dmax) begin
-					dmax <= dreq.addr;
+				$display("%x", dreq.addr[31:0]);
+				// if (dreq.addr < dmin) dmin <= dreq.addr;
+				// if (dreq.addr > dmax) begin
+					// dmax <= dreq.addr;
 					// #1 $display("dmin %x, dmax %x", dmin, dmax);
-				end
+				// end
 			end
 			// if (ireq.addr == 64'h8000478c) $display("imin %x, imax %x, dmin %x, dmax %x", imin, imax, dmin, dmax);
 		end
