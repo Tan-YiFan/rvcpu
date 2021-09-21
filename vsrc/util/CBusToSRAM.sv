@@ -31,7 +31,24 @@ module CBusToSRAM
 
 	assign oresp.ready = 1'b1;
 	assign oresp.last = state_nxt == INIT;
-	assign oresp.data = rdata;
+	// assign oresp.data = rdata;
+	u128 cnter;
+	always_ff @(posedge clk) begin
+		if (reset) cnter <= '0;
+		else cnter <= cnter + 1;
+	end
+	
+	always_comb begin
+		oresp.data = rdata;
+		unique case(oreq.addr)
+			64'h40600008: oresp.data = '0;
+			64'h3800bff8: oresp.data = cnter;
+			default: begin
+				
+			end
+		endcase
+	end
+	
 
 	u64 addr;
 	u64 idx;
