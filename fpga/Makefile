@@ -3,7 +3,6 @@ include ../Makefile.include
 
 default: project
 
-STANDALONE ?= false
 GEN_BITSTREAM ?= false
 
 # vivado project name
@@ -24,7 +23,7 @@ else
 endif
 $(XPR_FILE):
 	make -C .. BOARD=$(BOARD)
-	vivado $(VIVADO_FLAG) -mode batch -source board/$(BOARD)/mk.tcl -tclargs $(PRJ_FULL) $(STANDALONE) $(GEN_BITSTREAM) $(DUT_FREQ)
+	vivado $(VIVADO_FLAG) -mode batch -source board/$(BOARD)/mk.tcl -tclargs $(PRJ_FULL) $(GEN_BITSTREAM) $(DUT_FREQ)
 
 project: $(XPR_FILE)
 
