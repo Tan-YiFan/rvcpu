@@ -15,7 +15,7 @@ module DCache
 	localparam CBUS_WIDTH = 3;
 	localparam WORDS_PER_LINE = 2 ** (OFFSET_BITS - CBUS_WIDTH);
 
-	localparam INDEX_BITS = 11;
+	localparam INDEX_BITS = 13;
 	localparam NUM_LINES = 2 ** INDEX_BITS;
 	localparam TAG_WIDTH = 28 - OFFSET_BITS - INDEX_BITS;
 	`ASSERT(TAG_WIDTH + INDEX_BITS + OFFSET_BITS >= 28);
