@@ -37,9 +37,9 @@ coremark:
   stage: run_sim
   script:
     - export NOOP_HOME=$(pwd)
-    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/coremark/build/coremark-riscv64-nutshell_nf.bin | tee ${NOOP_HOME}/build/sim.txt || true
+    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/coremark/build/coremark-riscv64-nutshell.bin | tee ${NOOP_HOME}/build/sim.txt || true
     - export SIM_TIME=$(awk '/Guest cycle spent:/{print $5}' ${NOOP_HOME}/build/sim.txt)
-    - bash -c "if grep -q 'HIT GOOD TRAP' ${NOOP_HOME}/build/sim.txt; then echo "Succeeded!"; else ${NOOP_HOME}/build/emu -b $(expr ${SIM_TIME} - 1000) -e ${SIM_TIME} --dump-wave -i ${AM_HOME}/apps/coremark/build/coremark-riscv64-nutshell_nf.bin 2> /dev/null; exit 1; fi"
+    - bash -c "if grep -q 'HIT GOOD TRAP' ${NOOP_HOME}/build/sim.txt; then echo "Succeeded!"; else ${NOOP_HOME}/build/emu -b $(expr ${SIM_TIME} - 1000) -e ${SIM_TIME} --dump-wave -i ${AM_HOME}/apps/coremark/build/coremark-riscv64-nutshell.bin 2> /dev/null; exit 1; fi"
   needs:
     - create_emu
   artifacts:
@@ -52,9 +52,9 @@ dhrystone:
   stage: run_sim
   script:
     - export NOOP_HOME=$(pwd)
-    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/dhrystone/build/dhrystone-riscv64-nutshell_nf.bin | tee ${NOOP_HOME}/build/sim.txt || true
+    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/dhrystone/build/dhrystone-riscv64-nutshell.bin | tee ${NOOP_HOME}/build/sim.txt || true
     - export SIM_TIME=$(awk '/Guest cycle spent:/{print $5}' ${NOOP_HOME}/build/sim.txt)
-    - bash -c "if grep -q 'HIT GOOD TRAP' ${NOOP_HOME}/build/sim.txt; then echo "Succeeded!"; else ${NOOP_HOME}/build/emu -b $(expr ${SIM_TIME} - 1000) -e ${SIM_TIME} --dump-wave -i ${AM_HOME}/apps/dhrystone/build/dhrystone-riscv64-nutshell_nf.bin 2> /dev/null; exit 1; fi"
+    - bash -c "if grep -q 'HIT GOOD TRAP' ${NOOP_HOME}/build/sim.txt; then echo "Succeeded!"; else ${NOOP_HOME}/build/emu -b $(expr ${SIM_TIME} - 1000) -e ${SIM_TIME} --dump-wave -i ${AM_HOME}/apps/dhrystone/build/dhrystone-riscv64-nutshell.bin 2> /dev/null; exit 1; fi"
   needs:
     - create_emu
   artifacts:
@@ -67,9 +67,9 @@ microbench:
   stage: run_sim
   script:
     - export NOOP_HOME=$(pwd)
-    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/microbench/build/microbench-riscv64-nutshell_nf.bin | tee ${NOOP_HOME}/build/sim.txt || true
+    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/microbench/build/microbench-riscv64-nutshell.bin | tee ${NOOP_HOME}/build/sim.txt || true
     - export SIM_TIME=$(awk '/Guest cycle spent:/{print $5}' ${NOOP_HOME}/build/sim.txt)
-    - bash -c "if grep -q 'HIT GOOD TRAP' ${NOOP_HOME}/build/sim.txt; then echo "Succeeded!"; else ${NOOP_HOME}/build/emu -b $(expr ${SIM_TIME} - 1000) -e ${SIM_TIME} --dump-wave -i ${AM_HOME}/apps/microbench/build/microbench-riscv64-nutshell_nf.bin 2> /dev/null; exit 1; fi"
+    - bash -c "if grep -q 'HIT GOOD TRAP' ${NOOP_HOME}/build/sim.txt; then echo "Succeeded!"; else ${NOOP_HOME}/build/emu -b $(expr ${SIM_TIME} - 1000) -e ${SIM_TIME} --dump-wave -i ${AM_HOME}/apps/microbench/build/microbench-riscv64-nutshell.bin 2> /dev/null; exit 1; fi"
   needs:
     - create_emu
   artifacts:
