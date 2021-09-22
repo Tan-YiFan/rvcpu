@@ -187,7 +187,7 @@ module ICache
 		.ADDR_WIDTH(OFFSET_BITS + INDEX_BITS - ALIGN_BITS),
 		.DATA_WIDTH(64),
 		.BYTE_WIDTH(64),
-		.MEM_TYPE("bram"),
+		.MEM_TYPE("auto"),
 		.READ_LATENCY(1)
 	) data_ram (
 		.clk,  .en(1'b1),
