@@ -7,8 +7,7 @@ set board sugon:nf_card:part0:2.0
 
 # Add files for system top
 set src_files [list \
-  "[file normalize "${script_dir}/rtl/NutShell_top.v"]" \
-  "[file normalize "${script_dir}/rtl/counter.v"]" \
+  "[file normalize "${script_dir}/rtl"]" \
 ]
 
 # Add files for constraint

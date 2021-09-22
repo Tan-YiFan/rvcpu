@@ -24,8 +24,6 @@ create_emu:
   stage: sim_src
   script:
     - export NOOP_HOME=$(pwd)
-    - mkdir -p build
-    - cp -r vsrc/* build
     - make EMU_TRACE=1 emu
   needs:
     - scala_check
@@ -100,8 +98,6 @@ create_verilog:
   stage: fpga_src
   script:
     - export NOOP_HOME=$(pwd)
-    - mkdir -p build
-    - cp -r vsrc/* build
     - make BOARD=nf_card verilog
   needs:
     - scala_check
@@ -179,15 +175,15 @@ fpga_microbench:
     - bit_gen
     - copy_fpga_am
 
-fpga_rtthread:
+
+fpga_rt-thread:
   stage: fpga_eval
   tags:
     - nf_xvc
   script:
     - mkdir -p build
-    - chmod +x scripts/fpga_run.sh
-    - bash -c "scripts/fpga_run.sh rtthread"
+    - chmod +x scripts/rtt.sh
+    - bash -c "scripts/rtt.sh"
   needs:
     - bit_gen
     - copy_fpga_am
-  

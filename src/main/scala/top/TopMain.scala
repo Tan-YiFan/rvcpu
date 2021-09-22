@@ -17,25 +17,19 @@
 package top
 
 import nutcore.NutCoreConfig
-import system.NutShell
+import system.riscv_cpu
 import device.{AXI4VGA}
-import bus.axi4.AXI4
 import sim.SimTop
 
 import chisel3._
 import chisel3.stage._
 
 class Top extends Module {
-  val io = IO(new Bundle{
-    val mem = new AXI4
-  })
-  val nutshell = Module(new NutShell()(NutCoreConfig()))
-  val vga = Module(new AXI4VGA)
+  val io = IO(new Bundle{})
+  val nutshell = Module(new riscv_cpu()(NutCoreConfig()))
 
-  io.mem <> nutshell.io.mem
-  vga.io := DontCare
+  nutshell.io := DontCare
   dontTouch(nutshell.io)
-  dontTouch(vga.io)
 }
 
 object TopMain extends App {
