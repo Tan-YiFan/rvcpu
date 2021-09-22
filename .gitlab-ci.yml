@@ -182,8 +182,8 @@ fpga_rt-thread:
     - nf_xvc
   script:
     - mkdir -p build
-    - chmod +x scripts/rtt.sh
-    - bash -c "scripts/rtt.sh"
+    - chmod +x scripts/fpga_run.sh
+    - bash -c "scripts/fpga_run.sh rtthread"
   needs:
     - bit_gen
     - copy_fpga_am
