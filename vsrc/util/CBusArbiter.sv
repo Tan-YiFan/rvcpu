@@ -28,7 +28,7 @@ module CBusArbiter #(
     cbus_req_t saved_req, selected_req;
 
     // assign oreq = ireqs[index];
-    assign oreq = busy ? saved_req : '0;  // prevent early issue
+    assign oreq = busy ? ireqs[index] : '0;  // prevent early issue
     assign selected_req = ireqs[select];
 
     // select a preferred request

@@ -109,7 +109,7 @@ module ICache
 	u1 hit, valid_read;
 	assign hit = valid_read;
 
-	wire [OFFSET_BITS + INDEX_BITS - ALIGN_BITS - 1:0] ram_addr = state_nxt == INIT ?
+	wire [OFFSET_BITS + INDEX_BITS - ALIGN_BITS - 1:0] ram_addr = state == INIT ?
 	ireq.addr[OFFSET_BITS + INDEX_BITS - 1:ALIGN_BITS] :
 	{ireq.addr[OFFSET_BITS + INDEX_BITS - 1 -: INDEX_BITS], counter[OFFSET_BITS - ALIGN_BITS - 1: 0]};
 	u1 valid_wen, data_wen;
@@ -124,19 +124,15 @@ module ICache
 					if (~hit) begin
 						state_nxt = FETCH;
 						counter_nxt = 1'b0;
-						if (cresp.ready) begin
-							counter_nxt = 1'b1;
-						end
 					end
 				end
 			end
 			FETCH: begin
-				if (counter == 1000) state_nxt = INIT;
-				else if (cresp.ready) begin
+				if (cresp.ready) begin
 					counter_nxt = counter + 1;
 					data_wen = 1'b1;
 					if (cresp.last) begin
-						// state_nxt = INIT;
+						state_nxt = INIT;
 						counter_nxt = 1000;
 						valid_wen = '1;
 
@@ -160,12 +156,12 @@ module ICache
 	end
 	
 	assign iresp.addr_ok = 1'b1;
-	assign iresp.data_ok = state_nxt == INIT;
+	assign iresp.data_ok = state == INIT && hit;
 	
 	u64 selected_data;
 	assign iresp.data = ireq.addr[2] ? selected_data[63:32] : selected_data[31:0];
 
-	assign creq.valid = state_nxt == FETCH;
+	assign creq.valid = state == FETCH;
 	assign creq.is_write = '0;
 	assign creq.size = MSIZE8;
 	assign creq.addr = {ireq.addr[63:11], 11'b0};

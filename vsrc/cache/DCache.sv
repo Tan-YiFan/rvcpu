@@ -44,7 +44,7 @@ module DCache
 	wire [INDEX_BITS-1:0] selected_idx = index;
 	line_meta_t meta_read;
 
-	wire [OFFSET_BITS + INDEX_BITS - 1:0] ram_addr = state_nxt == INIT ?
+	wire [OFFSET_BITS + INDEX_BITS - 1:0] ram_addr = state == INIT ?
 	{dreq.addr[OFFSET_BITS + INDEX_BITS - 1:ALIGN_BITS], 3'b00} : {index, counter[OFFSET_BITS - ALIGN_BITS - 1: 0], {ALIGN_BITS{1'b0}}};
 	strobe_t data_wen;
 	u1 meta_wen;
@@ -55,7 +55,7 @@ module DCache
 	wire dirty = tag != meta_read.tag && meta_read.valid;
 	always_comb begin
 		state_nxt = state;
-		counter_nxt = '0;
+		counter_nxt = counter;
 		data_wen = '0;
 		meta_wen = '0;
 		unique case(state)
@@ -73,28 +73,24 @@ module DCache
 				end
 			end
 			FETCH: begin
-				if (counter == 1000) begin
-					state_nxt = INIT;
-					data_wen = dreq.strobe;
-				end
-				else if (cresp.ready) begin
+				if (cresp.ready) begin
 					counter_nxt = counter + 1;
 					data_wen = '1;
+					meta_wen = '1;
 					if (cresp.last) begin
 						// state_nxt = INIT;
-						counter_nxt = 1000;
-						meta_wen = '1;
+						counter_nxt = '0;
+						// meta_wen = '1;
+						state_nxt = INIT;
 					end
 				end
 			end
 			WRITEBACK: begin
-				if (counter == 1000) begin
-					state_nxt = FETCH;
-				end
-				else if (cresp.ready) begin
+				if (cresp.ready) begin
 					counter_nxt = counter + 1;
 					if (cresp.last) begin
-						counter_nxt = 1000;
+						counter_nxt = '0;
+						state_nxt = FETCH;
 					end
 				end
 			end
@@ -119,23 +115,23 @@ module DCache
 	end
 	
 	assign dresp.addr_ok = 1'b1;
-	assign dresp.data_ok = state_nxt == INIT;
+	assign dresp.data_ok = (uncached && cresp.ready) || (~uncached && state == INIT && hit);
 	
 	u64 selected_data;
 	assign dresp.data = uncached ? cresp.data : selected_data;
 
 	
 
-	assign creq.valid = state_nxt != INIT;
-	assign creq.is_write = (state_nxt == UNCACHED && |dreq.strobe) || state_nxt == WRITEBACK;
-	assign creq.size = state_nxt == UNCACHED ? dreq.size : MSIZE8;
-	assign creq.addr = state_nxt == UNCACHED ? dreq.addr : 
-	state_nxt == WRITEBACK ? {32'b0, 4'd8, meta_read.tag, index, 11'b0} : {dreq.addr[63:OFFSET_BITS], 11'b0};
+	assign creq.valid = state != INIT;
+	assign creq.is_write = (state == UNCACHED && |dreq.strobe) || state == WRITEBACK;
+	assign creq.size = state == UNCACHED ? dreq.size : MSIZE8;
+	assign creq.addr = state == UNCACHED ? dreq.addr : 
+	state == WRITEBACK ? {32'b0, 4'd8, meta_read.tag, index, 11'b0} : {dreq.addr[63:OFFSET_BITS], 11'b0};
 	// assign creq.addr = dreq.addr;
-	assign creq.strobe = state_nxt == UNCACHED ? dreq.strobe : '1;
-	assign creq.data = state_nxt == UNCACHED ? dreq.data : selected_data;
-	assign creq.len = state_nxt == UNCACHED ? MLEN1 : MLEN256;
-	assign creq.burst = state_nxt == UNCACHED ? AXI_BURST_FIXED : AXI_BURST_INCR;
+	assign creq.strobe = state == UNCACHED ? dreq.strobe : '1;
+	assign creq.data = state == UNCACHED ? dreq.data : selected_data;
+	assign creq.len = state == UNCACHED ? MLEN1 : MLEN256;
+	assign creq.burst = state == UNCACHED ? AXI_BURST_FIXED : AXI_BURST_INCR;
 
 	RAM_SinglePort #(
 		.ADDR_WIDTH(INDEX_BITS),
@@ -161,7 +157,7 @@ module DCache
 		.clk,  .en(1'b1),
 		.addr(ram_addr),
 		.strobe(data_wen),
-		.wdata(state_nxt == FETCH ? cresp.data : dreq.data),
+		.wdata(state == FETCH ? cresp.data : dreq.data),
 		.rdata(selected_data)
 	);
 
@@ -172,6 +168,8 @@ module DCache
 		// if (~reset && state == UNCACHED) $display("%x, strobe %x, valid %x, ready %x, state_nxt %x", creq.addr, creq.is_write, creq.valid, cresp.ready, state_nxt);
 		// if (dreq.addr == 64'h40600004) $display("oreq.addr %x, cresp.ready %x, state_nxt %x", creq.addr, cresp.ready, state_nxt);
 		// if (dreq.valid && dreq.addr == 64'h800059a0) $display ("%x, strobe %x", dreq.data, dreq.strobe);
+		// if (dreq.valid && |dreq.strobe && ~uncached && dresp.data_ok) $display ("addr %x, data %x, strobe %x", dreq.addr[31:0], dreq.data, dreq.strobe);
+		// if (state == WRITEBACK) $display("ram_addr %x, selected_data %x. creq.data %x", ram_addr, selected_data, creq.data);
 	end
 	
 	// check if written

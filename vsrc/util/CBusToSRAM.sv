@@ -141,7 +141,7 @@ module CBusToSRAM
 		end else begin
 			state <= state_nxt;
 			counter <= counter_nxt;
-			if (wen) $display("addr %x", addr[31:0]);
+			// if (wen) $display("addr %x, data %x", addr[31:0], oreq.data);
 		end
 	end
 	
