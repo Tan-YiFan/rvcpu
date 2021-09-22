@@ -60,7 +60,7 @@ module core
 			// 	if (ireq.addr > imax) imax <= ireq.addr;
 			// end
 			if (dreq.addr[31:28] == 4'd8 && dreq.valid) begin
-				$display("%x", dreq.addr[31:0]);
+				// $display("%x", dreq.addr[31:0]);
 				// if (dreq.addr < dmin) dmin <= dreq.addr;
 				// if (dreq.addr > dmax) begin
 					// dmax <= dreq.addr;

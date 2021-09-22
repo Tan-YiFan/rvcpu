@@ -65,7 +65,7 @@ module CBusToSRAM
 	for (genvar i = 0; i < 8; i++) begin
 		assign wmask[i * 8 + 7 -: 8] = {8{oreq.strobe[i]}};
 	end
-	assign wen = oreq.is_write;
+	assign wen = oreq.valid && oreq.is_write && oreq.addr[31:28] == 4'd8;
 	assign en = 1'b1;
 
 	u64 counter, counter_nxt;
@@ -141,6 +141,7 @@ module CBusToSRAM
 		end else begin
 			state <= state_nxt;
 			counter <= counter_nxt;
+			if (wen) $display("addr %x", addr[31:0]);
 		end
 	end
 	

@@ -9,6 +9,7 @@
 `include "util/CBusArbiter.sv"
 
 `include "cache/ICache.sv"
+`include "cache/DCache.sv"
 `endif
 module VTop 
 	import common::*;(
@@ -28,7 +29,8 @@ module VTop
     core core(.*);
     // IBusToCBus icvt(.*);
 	ICache ICache(.creq(icreq), .cresp(icresp), .*);
-    DBusToCBus dcvt(.*);
+    // DBusToCBus dcvt(.*);
+	DCache DCache(.creq(dcreq), .cresp(dcresp), .*);
 
     /**
      * TODO (Lab2) replace mux with your own arbiter :)
@@ -42,7 +44,7 @@ module VTop
 	always_ff @(posedge clk) begin
 		if (~reset) begin
 			// $display("icreq %x, %x", icreq.valid, icreq.addr);
-			// $display("oreq %x, %x", oreq.valid, oreq.addr);
+			// if (oreq.valid || dcreq.addr == 64'h40600004) $display("dcreq %x, %x, oreq %x, %x, dcresp %x", dcreq.addr, dcreq.valid, oreq.valid, oreq.addr, dcresp.ready);
 		end
 	end
 	

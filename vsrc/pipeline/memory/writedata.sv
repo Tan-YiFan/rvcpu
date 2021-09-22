@@ -19,7 +19,7 @@ module writedata
 );
 	always_comb begin
 		strobe = '0;
-		wd = 'x;
+		wd = '0;
 		unique case(msize)
 			MSIZE1: begin
 				unique case(addr)

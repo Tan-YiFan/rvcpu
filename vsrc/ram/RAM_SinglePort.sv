@@ -5,7 +5,7 @@ module RAM_SinglePort #(
 	parameter int ADDR_WIDTH = 21,
 	parameter int DATA_WIDTH = 64,
 	parameter int BYTE_WIDTH = 8,
-	parameter `STRING MEM_TYPE = "bram",
+	parameter MEM_TYPE = 2,
 	parameter READ_LATENCY = 1,
 	
 	localparam WORD_WIDTH = DATA_WIDTH,
@@ -39,13 +39,13 @@ module RAM_SinglePort #(
 		end
 		
 	end
-	assign rdata = mem[addr];
+	assign rdata = mem[addr >> $clog2(BYTES_PER_WORD)];
 
 	always_ff @(posedge clk) begin
 		if (en)
 			for (int i = 0; i < BYTES_PER_WORD; i++)
 				if (strobe[i])
-					mem[addr].lanes[i] <= wdata.lanes[i];
+					mem[addr >> $clog2(BYTES_PER_WORD)].lanes[i] <= wdata.lanes[i];
 	end
 	
 `else
