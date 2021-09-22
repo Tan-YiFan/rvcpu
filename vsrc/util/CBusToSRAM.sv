@@ -4,6 +4,7 @@
 `ifdef VERILATOR
 `include "include/common.sv"
 `endif
+parameter DELAY = 1000;
 module CBusToSRAM 
 	import common::*;(
 	input logic clk, reset,
@@ -28,8 +29,14 @@ module CBusToSRAM
 
 	state_t state, state_nxt;
 	
+	u64 delay, delay_nxt;
+	always_ff @(posedge clk) begin
+		if (reset) delay <= '0;
+		else delay <= delay_nxt;
+	end
+	
 
-	assign oresp.ready = 1'b1;
+	assign oresp.ready = delay_nxt == '0;
 	assign oresp.last = state_nxt == INIT;
 	// assign oresp.data = rdata;
 	u128 cnter, cnter1;
@@ -106,6 +113,7 @@ module CBusToSRAM
 
 	always_comb begin
 		state_nxt = state;
+		delay_nxt = delay;
 		unique case(state)
 			INIT: begin
 				if (oreq.valid) begin
@@ -114,7 +122,12 @@ module CBusToSRAM
 						end
 						AXI_BURST_INCR: begin
 							`ASSERT(oreq.size == MSIZE8);
-							state_nxt = DOING;
+							if (delay_nxt != DELAY) delay_nxt = delay + 1;
+							else begin
+								delay_nxt = '0;
+								state_nxt = DOING;
+							end
+							
 						end
 
 						default: begin
