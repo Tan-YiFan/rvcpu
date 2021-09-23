@@ -41,4 +41,13 @@ test:
 	./build/emu -b 0 -e 0 -i ./ready-to-run/dhrystone-riscv64-nutshell.bin --diff ./riscv64-nemu-interpreter-so || true
 	./build/emu -b 0 -e 0 -i ./ready-to-run/microbench-riscv64-nutshell.bin --diff ./riscv64-nemu-interpreter-so || true
 
+bit:
+	rm -rf build
+	mkdir -p build
+	cp -r vsrc/* build
+	export NOOP_HOME=$(pwd)
+	export PATH=${PATH}:~/Xilinx/Vivado/2019.2/bin/
+	rm -rf fpga/board/nf_card/build/
+	make -C fpga PRJ=project BOARD=nf_card DUT_FREQ=100 GEN_BITSTREAM=true
+	
 .PHONY: verilog emu clean
