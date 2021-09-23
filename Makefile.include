@@ -20,7 +20,7 @@ SIM_TOP_V ?= $(BUILD_DIR)/$(SIM_TOP).v
 ifeq (BOARD, "sim")
     SCALA_OPTS ?= $(SIMTOP) -td $(@D) --output-file $(@F) BOARD=sim CORE=$(CORE)
 else
-    SCALA_OPTS ?= top.$(TOP) -td $(@D) --output-file $(@F) --infer-rw $(FPGATOP) --repl-seq-mem -c:$(FPGATOP):-o:$(@D)/$(@F).conf BOARD=$(BOARD) CORE=$(CORE)
+    SCALA_OPTS ?= $(SIMTOP) -td $(@D) --output-file $(@F) --infer-rw $(FPGATOP) --repl-seq-mem -c:$(FPGATOP):-o:$(@D)/$(@F).conf BOARD=$(BOARD) CORE=$(CORE)
 endif
 
-DIFFTEST_OPTS ?= ""
+DIFFTEST_OPTS ?= 

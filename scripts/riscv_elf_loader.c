@@ -61,19 +61,19 @@ int fd;
 int set_interface_attribs(int fd, int speed, int parity, int should_block);
 
 void loader(char *file) {
-  FILE *fp = fopen(file, "rb");
-  assert(fp);
+  int fd = open(file, O_RDONLY);
+  assert(fd != -1);
 
   Elf64_Ehdr *elf;
   Elf64_Phdr *ph = NULL;
 
   int i;
-  uint8_t buf[4096];
-  uint8_t buf_temp[16];
 
   // the program header should be located within the first
   // 4096 byte of the ELF file
-  fread(buf, 4096, 1, fp);
+  struct stat fd_stat;
+  fstat(fd, &fd_stat);
+  char *buf = mmap(NULL, fd_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
   elf = (void *)buf;
 
   // TODO: fix the magic number with the correct one
@@ -95,82 +95,19 @@ void loader(char *file) {
         continue;
       }
 
-      uint64_t size = 0;
-
-      // TODO: read the content of the segment from the ELF file
-      // to the memory region [VirtAddr, VirtAddr + FileSiz)
-
-      // align va to 64-bit boundary
-      if (va & ALIGN_MASK_8_BYTES) {
-        assert((va & ALIGN_MASK_4_BYTES) == 0);
-        assert(ph[i].p_filesz >= 4);
-
-        memset(buf_temp, 0, 16);
-        fseek(fp, ph[i].p_offset, SEEK_SET);
-        fread(buf_temp, 4, 1, fp); // read out unaligned size to temporal buffer
-
-        *(mem_map_base_mmio + (va >> 2)) = *(uint32_t *)buf_temp;
-
-        va += 4;
-        size += 4;
-      }
-
-      // aligned copy
-      while ((size + 8) <= ph[i].p_filesz) {
-        memset(buf_temp, 0, 16);
-        fseek(fp, ph[i].p_offset + size, SEEK_SET);
-        fread(buf_temp, 8, 1, fp); // read out unaligned size to temporal buffer
-
-        *(mem_map_base_mem + (va >> 3)) = *(uint64_t *)buf_temp;
-
-        va += 8;
-        size += 8;
-      }
-
-      // check if remaining a 32-bit word
-      if (size != ph[i].p_filesz) {
-        uint64_t lastsz = ph[i].p_filesz - size;
-
-        assert((va & ALIGN_MASK_4_BYTES) == 0);
-        assert(lastsz == 4);
-
-        memset(buf_temp, 0, 16);
-        fseek(fp, ph[i].p_offset + size, SEEK_SET);
-        fread(buf_temp, 4, 1, fp);
-
-        *(mem_map_base_mmio + (va >> 2)) = *(uint32_t *)buf_temp;
-        va += 4;
-      }
-
-      // fseek(fp, ph[i].p_offset, SEEK_SET);
-      // fread(mips_addr(va), ph[i].p_filesz, 1, fp);
-
-      // TODO: zero the memory region
-      // [VirtAddr + FileSiz, VirtAddr + MemSiz)
-      // printf("va: %08x mips_addr: %08x\n", init_va, mips_addr(init_va +
-      // ph[i].p_filesz)); printf("memsz: %lld, filesz %lld\n", ph[i].p_memsz,
-      // ph[i].p_filesz);
-      uint64_t rest = ph[i].p_memsz - ph[i].p_filesz;
-      uint64_t zero_sz = 0;
-      if (zero_sz < rest && (va & ALIGN_MASK_8_BYTES)) {
-        *(mem_map_base_mmio + (va >> 2)) = 0;
-        va += 4;
-        zero_sz += 4;
-      }
-      while ((zero_sz + 8) <= rest) {
-        *(mem_map_base_mem + (va >> 3)) = 0;
-        va += 8;
-        zero_sz += 8;
-      }
-      if (zero_sz < rest) {
-        if ((zero_sz + 4) != rest)
-          exit(-1);
-        *(mem_map_base_mmio + (va >> 2)) = 0;
+      // memcpy((char *)mem_map_base_mem + va, buf + ph[i].p_offset, ph[i].p_filesz);
+      // memset((char *)mem_map_base_mem + va + ph[i].p_filesz, 0, ph[i].p_memsz - ph[i].p_filesz);
+      for (int j = 0; j <= ph[i].p_memsz; j++) {
+        if (j <= ph[i].p_filesz) {
+          *((char *)mem_map_base_mem + va + j) = *(buf + ph[i].p_offset + j);
+        } else {
+          *((char *)mem_map_base_mem + va + j) = 0;
+        }
       }
     }
   }
 
-  fclose(fp);
+  close(fd);
 }
 
 int set_interface_attribs(int fd, int speed, int parity, int should_block) {
@@ -216,14 +153,14 @@ int set_interface_attribs(int fd, int speed, int parity, int should_block) {
 int should_exit;
 
 void *read_uart(void *dev) {
-  int timeout = 1200;
+  int timeout = 60;
   time_t prev = time(NULL);
   char line_buffer[64];
   int buffer_pos = 0;
   int reach_end = 0;
   int uart_fd = open((char *)dev, O_RDWR | O_NOCTTY | O_SYNC | O_NONBLOCK);
   if (uart_fd < 0) {
-    fprintf(stderr, "opening %s: %s\n", dev, strerror(errno));
+    fprintf(stderr, "opening %s: %s\n", (char *)dev, strerror(errno));
     exit(1);
   }
   // set speed to 115,200 bps, 8n1 (no parity)
@@ -235,9 +172,7 @@ void *read_uart(void *dev) {
     if (n > 0) {
       if (ch == '\n') {
         line_buffer[buffer_pos++] = '\0';
-        if (strncmp(line_buffer, "Exit with code = ", 17) == 0) {
-          reach_end = 1;
-        }
+        prev = time(NULL);
         printf("%s\n", line_buffer);
         buffer_pos = 0;
       } else if (ch == '\r') {
@@ -246,10 +181,6 @@ void *read_uart(void *dev) {
         line_buffer[buffer_pos++] = ch;
       }
     }
-  }
-
-  if (time(NULL) - prev > timeout) {
-    printf("\nUART read timeout, output maybe incomplete.\n");
   }
 
   close(uart_fd);

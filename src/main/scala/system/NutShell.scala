@@ -26,8 +26,6 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.BoringUtils
 
-import chisel3.experimental.{annotate, ChiselAnnotation}
-
 trait HasSoCParameter {
   val EnableILA = Settings.get("EnableILA")
   val HasL2cache = Settings.get("HasL2cache")
@@ -43,7 +41,7 @@ class ILABundle extends NutCoreBundle {
   val InstrCnt = UInt(64.W)
 }
 
-class NutShell(implicit val p: NutCoreConfig) extends Module with HasSoCParameter {
+class riscv_cpu(implicit val p: NutCoreConfig) extends Module with HasSoCParameter {
   val io = IO(new Bundle{
     val mem = new AXI4
     val mmio = (if (p.FPGAPlatform) { None } else { Some(new SimpleBusUC) })

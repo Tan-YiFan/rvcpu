@@ -40,7 +40,7 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 
 # The design that will be created by this Tcl script contains the following 
 # module references:
-# NutShell_top, arm_clock_counter
+# arm_clock_counter, fpga_top
 
 # Please add the sources of those modules before sourcing this Tcl script.
 
@@ -139,7 +139,6 @@ xilinx.com:ip:util_vector_logic:2.0\
 xilinx.com:ip:ddr4:2.2\
 xilinx.com:ip:util_ds_buf:2.1\
 xilinx.com:ip:proc_sys_reset:5.0\
-xilinx.com:ip:system_ila:1.1\
 xilinx.com:ip:axi_uartlite:2.0\
 xilinx.com:ip:zynq_ultra_ps_e:3.3\
 "
@@ -167,8 +166,8 @@ xilinx.com:ip:zynq_ultra_ps_e:3.3\
 set bCheckModules 1
 if { $bCheckModules == 1 } {
    set list_check_mods "\ 
-NutShell_top\
 arm_clock_counter\
+fpga_top\
 "
 
    set list_mods_missing ""
@@ -241,17 +240,6 @@ proc create_root_design { parentCell } {
 
   # Create ports
 
-  # Create instance: NutShell_top, and set properties
-  set block_name NutShell_top
-  set block_cell_name NutShell_top
-  if { [catch {set NutShell_top [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
-     catch {common::send_msg_id "BD_TCL-105" "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   } elseif { $NutShell_top eq "" } {
-     catch {common::send_msg_id "BD_TCL-106" "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   }
-  
   # Create instance: arm_clock_counter_0, and set properties
   set block_name arm_clock_counter
   set block_cell_name arm_clock_counter_0
@@ -377,6 +365,17 @@ proc create_root_design { parentCell } {
    CONFIG.C_BUF_TYPE {IBUFDS} \
  ] $ddr4_mig_sys_clk_ibuf
 
+  # Create instance: fpga_top, and set properties
+  set block_name fpga_top
+  set block_cell_name fpga_top
+  if { [catch {set fpga_top [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_msg_id "BD_TCL-105" "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $fpga_top eq "" } {
+     catch {common::send_msg_id "BD_TCL-106" "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
   # Create instance: mig_sys_rst_gen, and set properties
   set mig_sys_rst_gen [ create_bd_cell -type ip -vlnv xilinx.com:ip:util_vector_logic:2.0 mig_sys_rst_gen ]
   set_property -dict [ list \
@@ -396,15 +395,6 @@ proc create_root_design { parentCell } {
    CONFIG.C_OPERATION {not} \
    CONFIG.C_SIZE {1} \
  ] $pl_reset_gen
-
-  # Create instance: system_ila_0, and set properties
-  set system_ila_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:system_ila:1.1 system_ila_0 ]
-  set_property -dict [ list \
-   CONFIG.C_BRAM_CNT {9} \
-   CONFIG.C_MON_TYPE {MIX} \
-   CONFIG.C_NUM_MONITOR_SLOTS {2} \
-   CONFIG.C_NUM_OF_PROBES {6} \
- ] $system_ila_0
 
   # Create instance: uart_role, and set properties
   set uart_role [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_uartlite:2.0 uart_role ]
@@ -737,27 +727,19 @@ proc create_root_design { parentCell } {
   # Create interface connections
   connect_bd_intf_net -intf_net HPM0_LPD [get_bd_intf_pins axi_ic_mmio/S00_AXI] [get_bd_intf_pins zynq_mpsoc/M_AXI_HPM0_LPD]
   connect_bd_intf_net -intf_net HPM1_FPD [get_bd_intf_pins axi_ic_pl_ddr/S00_AXI] [get_bd_intf_pins zynq_mpsoc/M_AXI_HPM1_FPD]
-  connect_bd_intf_net -intf_net NutShell_top_io_mem [get_bd_intf_pins NutShell_top/io_mem] [get_bd_intf_pins axi_role_connect/S00_AXI]
-connect_bd_intf_net -intf_net [get_bd_intf_nets NutShell_top_io_mem] [get_bd_intf_pins axi_role_connect/S00_AXI] [get_bd_intf_pins system_ila_0/SLOT_0_AXI]
   connect_bd_intf_net -intf_net axi_ic_mmio_M00_AXI [get_bd_intf_pins axi_ic_mmio/M00_AXI] [get_bd_intf_pins cpu_rst_reg/S_AXI]
   connect_bd_intf_net -intf_net axi_ic_mmio_M01_AXI [get_bd_intf_pins axi_dbg_bridge/S_AXI] [get_bd_intf_pins axi_ic_mmio/M01_AXI]
   connect_bd_intf_net -intf_net axi_ic_pl_ddr_M00_AXI [get_bd_intf_pins axi_ic_pl_ddr/M00_AXI] [get_bd_intf_pins ddr4_mig/C0_DDR4_S_AXI]
   connect_bd_intf_net -intf_net axi_ic_role_mmio_M00_AXI [get_bd_intf_pins axi_ic_role_mmio/M00_AXI] [get_bd_intf_pins uart_role/S_AXI]
   connect_bd_intf_net -intf_net axi_ic_role_mmio_M01_AXI [get_bd_intf_pins axi_gpio_0/S_AXI] [get_bd_intf_pins axi_ic_role_mmio/M01_AXI]
-connect_bd_intf_net -intf_net [get_bd_intf_nets axi_ic_role_mmio_M01_AXI] [get_bd_intf_pins axi_ic_role_mmio/M01_AXI] [get_bd_intf_pins system_ila_0/SLOT_1_AXI]
   connect_bd_intf_net -intf_net axi_ic_role_mmio_M02_AXI [get_bd_intf_pins axi_gpio_1/S_AXI] [get_bd_intf_pins axi_ic_role_mmio/M02_AXI]
   connect_bd_intf_net -intf_net axi_role_connect_M00_AXI [get_bd_intf_pins axi_ic_pl_ddr/S01_AXI] [get_bd_intf_pins axi_role_connect/M00_AXI]
   connect_bd_intf_net -intf_net axi_role_connect_M01_AXI [get_bd_intf_pins axi_ic_role_mmio/S00_AXI] [get_bd_intf_pins axi_role_connect/M01_AXI]
   connect_bd_intf_net -intf_net ddr4_mig_C0_DDR4 [get_bd_intf_ports DDR4] [get_bd_intf_pins ddr4_mig/C0_DDR4]
   connect_bd_intf_net -intf_net ddr4_mig_sys_clk_in [get_bd_intf_ports ddr4_mig_sys_clk] [get_bd_intf_pins ddr4_mig_sys_clk_ibuf/CLK_IN_D]
+  connect_bd_intf_net -intf_net fpga_top_io_mem [get_bd_intf_pins axi_role_connect/S00_AXI] [get_bd_intf_pins fpga_top/io_mem]
 
   # Create port connections
-  connect_bd_net -net NutShell_top_io_ila_InstrCnt [get_bd_pins NutShell_top/io_ila_InstrCnt] [get_bd_pins system_ila_0/probe5]
-  connect_bd_net -net NutShell_top_io_ila_WBUpc [get_bd_pins NutShell_top/io_ila_WBUpc] [get_bd_pins system_ila_0/probe0]
-  connect_bd_net -net NutShell_top_io_ila_WBUrfData [get_bd_pins NutShell_top/io_ila_WBUrfData] [get_bd_pins system_ila_0/probe4]
-  connect_bd_net -net NutShell_top_io_ila_WBUrfDest [get_bd_pins NutShell_top/io_ila_WBUrfDest] [get_bd_pins system_ila_0/probe3]
-  connect_bd_net -net NutShell_top_io_ila_WBUrfWen [get_bd_pins NutShell_top/io_ila_WBUrfWen] [get_bd_pins system_ila_0/probe2]
-  connect_bd_net -net NutShell_top_io_ila_WBUvalid [get_bd_pins NutShell_top/io_ila_WBUvalid] [get_bd_pins system_ila_0/probe1]
   connect_bd_net -net arm_clock_counter_0_cnt_output [get_bd_pins arm_clock_counter_0/cnt_output] [get_bd_pins axi_gpio_1/gpio_io_i]
   connect_bd_net -net axi_gpio_0_gpio_io_o [get_bd_pins axi_gpio_0/gpio_io_o] [get_bd_pins cpu_rst_reg/gpio2_io_i]
   connect_bd_net -net axi_ic_if_resetn [get_bd_pins arm_clock_counter_0/cnt_resetn] [get_bd_pins axi_dbg_bridge/s_axi_aresetn] [get_bd_pins axi_gpio_1/s_axi_aresetn] [get_bd_pins axi_ic_mmio/M00_ARESETN] [get_bd_pins axi_ic_mmio/M01_ARESETN] [get_bd_pins axi_ic_mmio/S00_ARESETN] [get_bd_pins axi_ic_role_mmio/M02_ARESETN] [get_bd_pins cpu_rst_reg/s_axi_aresetn] [get_bd_pins pl_clk_sys_reset/peripheral_aresetn]
@@ -765,7 +747,7 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets axi_ic_role_mmio_M01_AXI] [get_b
   connect_bd_net -net clk_wiz_locked [get_bd_pins clk_wiz/locked] [get_bd_pins pl_clk_sys_reset/dcm_locked] [get_bd_pins pl_ddr_sys_reset/dcm_locked]
   connect_bd_net -net cpu_rst_reg_delay_Q [get_bd_pins cpu_rst_reg_delay/Q] [get_bd_pins cpu_rst_reg_delay_not/Op1]
   connect_bd_net -net cpu_rst_reg_delay_not_Res [get_bd_pins cpu_rst_reg_delay_not/Res] [get_bd_pins cpu_rst_reg_posedge/Op1]
-  connect_bd_net -net cpu_rst_reg_gpio_io_o [get_bd_pins NutShell_top/reset] [get_bd_pins cpu_rst_reg/gpio_io_o] [get_bd_pins cpu_rst_reg_delay/D] [get_bd_pins cpu_rst_reg_posedge/Op2] [get_bd_pins system_ila_0/resetn]
+  connect_bd_net -net cpu_rst_reg_gpio_io_o [get_bd_pins cpu_rst_reg/gpio_io_o] [get_bd_pins cpu_rst_reg_delay/D] [get_bd_pins cpu_rst_reg_posedge/Op2] [get_bd_pins fpga_top/reset]
   connect_bd_net -net cpu_rst_reg_posedge_Res [get_bd_pins cpu_rst_reg_posedge/Res] [get_bd_pins mig_sys_rst_gen/Op1]
   connect_bd_net -net ddr4_mig_axi_if_reset [get_bd_pins axi_ic_pl_ddr/ARESETN] [get_bd_pins axi_ic_role_mmio/ARESETN] [get_bd_pins axi_role_connect/ARESETN] [get_bd_pins pl_ddr_sys_reset/interconnect_aresetn]
   connect_bd_net -net ddr4_mig_axi_reset [get_bd_pins axi_gpio_0/s_axi_aresetn] [get_bd_pins axi_ic_pl_ddr/M00_ARESETN] [get_bd_pins axi_ic_pl_ddr/S00_ARESETN] [get_bd_pins axi_ic_pl_ddr/S01_ARESETN] [get_bd_pins axi_ic_role_mmio/M00_ARESETN] [get_bd_pins axi_ic_role_mmio/M01_ARESETN] [get_bd_pins axi_ic_role_mmio/S00_ARESETN] [get_bd_pins axi_role_connect/M00_ARESETN] [get_bd_pins axi_role_connect/M01_ARESETN] [get_bd_pins axi_role_connect/S00_ARESETN] [get_bd_pins ddr4_mig/c0_ddr4_aresetn] [get_bd_pins pl_ddr_sys_reset/peripheral_aresetn] [get_bd_pins uart_role/s_axi_aresetn]
@@ -778,14 +760,14 @@ connect_bd_intf_net -intf_net [get_bd_intf_nets axi_ic_role_mmio_M01_AXI] [get_b
   connect_bd_net -net pl_reset_gen_Res [get_bd_pins mig_sys_rst_gen/Op2] [get_bd_pins pl_reset_gen/Res]
   connect_bd_net -net pl_resetn0 [get_bd_pins clk_wiz/resetn] [get_bd_pins pl_clk_sys_reset/ext_reset_in] [get_bd_pins pl_reset_gen/Op1] [get_bd_pins zynq_mpsoc/pl_resetn0]
   connect_bd_net -net uart_role_tx [get_bd_pins uart_role/tx] [get_bd_pins zynq_mpsoc/emio_uart1_rxd]
-  connect_bd_net -net user_clk [get_bd_pins NutShell_top/clock] [get_bd_pins axi_gpio_0/s_axi_aclk] [get_bd_pins axi_ic_pl_ddr/S01_ACLK] [get_bd_pins axi_ic_role_mmio/ACLK] [get_bd_pins axi_ic_role_mmio/M00_ACLK] [get_bd_pins axi_ic_role_mmio/M01_ACLK] [get_bd_pins axi_ic_role_mmio/S00_ACLK] [get_bd_pins axi_role_connect/ACLK] [get_bd_pins axi_role_connect/M00_ACLK] [get_bd_pins axi_role_connect/M01_ACLK] [get_bd_pins axi_role_connect/S00_ACLK] [get_bd_pins clk_wiz/clk_out1] [get_bd_pins pl_clk_sys_reset/slowest_sync_clk] [get_bd_pins pl_ddr_sys_reset/slowest_sync_clk] [get_bd_pins system_ila_0/clk] [get_bd_pins uart_role/s_axi_aclk]
+  connect_bd_net -net user_clk [get_bd_pins axi_gpio_0/s_axi_aclk] [get_bd_pins axi_ic_pl_ddr/S01_ACLK] [get_bd_pins axi_ic_role_mmio/ACLK] [get_bd_pins axi_ic_role_mmio/M00_ACLK] [get_bd_pins axi_ic_role_mmio/M01_ACLK] [get_bd_pins axi_ic_role_mmio/S00_ACLK] [get_bd_pins axi_role_connect/ACLK] [get_bd_pins axi_role_connect/M00_ACLK] [get_bd_pins axi_role_connect/M01_ACLK] [get_bd_pins axi_role_connect/S00_ACLK] [get_bd_pins clk_wiz/clk_out1] [get_bd_pins fpga_top/clock] [get_bd_pins pl_clk_sys_reset/slowest_sync_clk] [get_bd_pins pl_ddr_sys_reset/slowest_sync_clk] [get_bd_pins uart_role/s_axi_aclk]
   connect_bd_net -net zynq_mpsoc_emio_uart1_txd [get_bd_pins uart_role/rx] [get_bd_pins zynq_mpsoc/emio_uart1_txd]
 
   # Create address segments
-  create_bd_addr_seg -range 0x000400000000 -offset 0x004800000000 [get_bd_addr_spaces NutShell_top/io_mem] [get_bd_addr_segs ddr4_mig/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK] ROLE_TO_PL_DDR4
-  create_bd_addr_seg -range 0x00001000 -offset 0x20002000 [get_bd_addr_spaces NutShell_top/io_mem] [get_bd_addr_segs axi_gpio_0/S_AXI/Reg] SEG_axi_gpio_0_Reg
-  create_bd_addr_seg -range 0x00001000 -offset 0x20003000 [get_bd_addr_spaces NutShell_top/io_mem] [get_bd_addr_segs axi_gpio_1/S_AXI/Reg] SEG_axi_gpio_1_Reg
-  create_bd_addr_seg -range 0x00001000 -offset 0x20001000 [get_bd_addr_spaces NutShell_top/io_mem] [get_bd_addr_segs uart_role/S_AXI/Reg] SEG_uart_role_Reg
+  create_bd_addr_seg -range 0x000400000000 -offset 0x004800000000 [get_bd_addr_spaces fpga_top/io_mem] [get_bd_addr_segs ddr4_mig/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK] ROLE_TO_PL_DDR4
+  create_bd_addr_seg -range 0x00001000 -offset 0x20002000 [get_bd_addr_spaces fpga_top/io_mem] [get_bd_addr_segs axi_gpio_0/S_AXI/Reg] SEG_axi_gpio_0_Reg
+  create_bd_addr_seg -range 0x00001000 -offset 0x20003000 [get_bd_addr_spaces fpga_top/io_mem] [get_bd_addr_segs axi_gpio_1/S_AXI/Reg] SEG_axi_gpio_1_Reg
+  create_bd_addr_seg -range 0x00001000 -offset 0x20001000 [get_bd_addr_spaces fpga_top/io_mem] [get_bd_addr_segs uart_role/S_AXI/Reg] SEG_uart_role_Reg
   create_bd_addr_seg -range 0x000400000000 -offset 0x004800000000 [get_bd_addr_spaces zynq_mpsoc/Data] [get_bd_addr_segs ddr4_mig/C0_DDR4_MEMORY_MAP/C0_DDR4_ADDRESS_BLOCK] ARM_TO_PL_DDR4
   create_bd_addr_seg -range 0x00010000 -offset 0x80010000 [get_bd_addr_spaces zynq_mpsoc/Data] [get_bd_addr_segs axi_dbg_bridge/S_AXI/Reg0] DBG_BRIDGE
   create_bd_addr_seg -range 0x00001000 -offset 0x80000000 [get_bd_addr_spaces zynq_mpsoc/Data] [get_bd_addr_segs cpu_rst_reg/S_AXI/Reg] SEG_cpu_rst_reg_Reg

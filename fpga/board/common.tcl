@@ -10,21 +10,14 @@ if {[llength $argv] > 0} {
 }
 
 if {[llength $argv] > 1} {
-  set standalone [lindex $argv 1]
-} else {
-  puts "standalone mode is not given!"
-  return 1
-}
-
-if {[llength $argv] > 2} {
-  set gen_bit [lindex $argv 2]
+  set gen_bit [lindex $argv 1]
 } else {
   puts "generate bit option is not given!"
   return 1
 }
 
-if {[llength $argv] > 3} {
-  set dut_freq [lindex $argv 3]
+if {[llength $argv] > 2} {
+  set dut_freq [lindex $argv 2]
 } else {
   puts "dut frequency option is not given!"
   return 1
@@ -59,25 +52,17 @@ add_files -norecurse -fileset sources_1 $inc_files
 set_property is_global_include true [get_files $inc_files]
 
 # Add files for nutshell
-lappend src_files "[file normalize "${fpga_dir}/../build/SimTop.v"]"
+lappend src_files "[file normalize "${fpga_dir}/../build"]"
 
-add_files -norecurse -fileset sources_1 $src_files
-add_files -fileset sources_1  ${fpga_dir}/../vsrc
+add_files -fileset sources_1 $src_files
 if {[info exists xdc_files]} {
   add_files -norecurse -fileset constrs_1 $xdc_files
 }
 
-# Block Designs
-if {${standalone} == "true"} {
-  add_bd ${bd_dir}/standalone.tcl
-  make_wrapper -files [get_files *system_top.bd] -top
-  add_files -norecurse -fileset sources_1 $project_dir/$project_name.srcs/sources_1/bd/system_top/hdl/system_top_wrapper.v
-  set topmodule system_top_wrapper
-} else {
-  add_bd ${fpga_dir}/NutShell.tcl
-  add_bd ${bd_dir}/arm.tcl
-  set topmodule system_top
-}
+add_bd ${bd_dir}/standalone.tcl
+make_wrapper -files [get_files *system_top.bd] -top
+add_files -norecurse -fileset sources_1 $project_dir/$project_name.srcs/sources_1/bd/system_top/hdl/system_top_wrapper.v
+set topmodule system_top_wrapper
 
 # setting top module for FPGA flow and simulation flow
 set_property "top" $topmodule [current_fileset]
