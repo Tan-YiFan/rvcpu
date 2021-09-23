@@ -19,7 +19,7 @@ build/SimTop.v: $(SCALA_FILE)
 ifeq ($(SCALA_CODE), "true")
 	mill chiselModule.runMain $(SCALA_OPTS)
 endif
-	cp $(VERILOG_FILE) $(SYSTEMVERILOG_FILE) build
+	cp -r vsrc/* build
 
 verilog: build/SimTop.v
 
