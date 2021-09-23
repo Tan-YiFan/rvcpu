@@ -48,6 +48,8 @@ module decoder
 	u64 imm_jtype;
 	assign imm_jtype = {{43{sign_bit}}, raw_instr[31], raw_instr[19:12], raw_instr[20], raw_instr[30:21], 1'b0};
 
+	u64 imm_ztype;
+	assign imm_ztype = {59'b0, raw_instr[19:15]};
 	decoded_op_t op;
 	control_t ctl;
 
@@ -574,22 +576,52 @@ module decoder
 						
 					end
 					F3_CSRRW: begin
-						
+						op = CSRRW;
+						ctl.alufunc = ALU_PASSA;
+						ctl.regwrite = 1'b1;
+						ctl.csrwrite = 1'b1;
+						ctl.csr_write_type = CSR_CSRRW;
 					end
 					F3_CSRRS: begin
-						
+						op = CSRRS;
+						ctl.alufunc = ALU_PASSA;
+						ctl.regwrite = 1'b1;
+						ctl.csrwrite = 1'b1;
+						ctl.csr_write_type = CSR_CSRRS;
 					end
 					F3_CSRRC: begin
-						
+						op = CSRRC;
+						ctl.alufunc = ALU_PASSA;
+						ctl.regwrite = 1'b1;
+						ctl.csrwrite = 1'b1;
+						ctl.csr_write_type = CSR_CSRRC;
 					end
 					F3_CSRRWI: begin
-						
+						op = CSRRWI;
+						ctl.regwrite = 1'b1;
+						ctl.alufunc = ALU_PASSB;
+						ctl.csrwrite = 1'b1;
+						ctl.csr_write_type = CSR_CSRRW;
+						ctl.imm_as_src2 = 1'b1;
+						ctl.imm_type = IMM_Z;
 					end
 					F3_CSRRSI: begin
-						
+						op = CSRRSI;
+						ctl.regwrite = 1'b1;
+						ctl.alufunc = ALU_PASSB;
+						ctl.csrwrite = 1'b1;
+						ctl.csr_write_type = CSR_CSRRS;
+						ctl.imm_as_src2 = 1'b1;
+						ctl.imm_type = IMM_Z;
 					end
 					F3_CSRRCI: begin
-						
+						op = CSRRCI;
+						ctl.regwrite = 1'b1;
+						ctl.alufunc = ALU_PASSB;
+						ctl.csrwrite = 1'b1;
+						ctl.csr_write_type = CSR_CSRRC;
+						ctl.imm_as_src2 = 1'b1;
+						ctl.imm_type = IMM_Z;
 					end
 					default: begin
 						
@@ -611,6 +643,7 @@ module decoder
 			IMM_J: imm = imm_jtype;
 			IMM_U: imm = imm_utype;
 			IMM_S: imm = imm_stype;
+			IMM_Z: imm = imm_ztype;
 			default: begin
 				
 			end

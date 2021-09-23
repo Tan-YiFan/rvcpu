@@ -22,6 +22,8 @@ module csr
 	always_ff @(posedge clk) begin
 		if (reset) begin
 			regs <= '0;
+			regs.mcause[1] <= 1'b1;
+			regs.mepc[31] <= 1'b1;
 		end else begin
 			regs <= regs_nxt;
 		end
@@ -65,7 +67,9 @@ module csr
 				default: begin
 					
 				end
+				
 			endcase
+			regs_nxt.mstatus.sd = regs_nxt.mstatus.fs != 0;
 		end else begin end
 		// Exception: M stage
 		// if (exception.valid) begin

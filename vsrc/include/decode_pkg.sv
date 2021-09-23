@@ -153,7 +153,7 @@ package decode_pkg;
 		SB, SH, SW, SD,
 		FENCE, FENCEI,
 		ECALL, EBREAK,
-		CSRRW, CSRRS, CSRRRC,
+		CSRRW, CSRRS, CSRRC,
 		CSRRWI, CSRRSI, CSRRCI,
 		ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND,
 		ADDI, SLLI, SLTI, SLTIU, XORI, SRLI, SRAI, ORI, ANDI,
@@ -162,11 +162,11 @@ package decode_pkg;
 		MUL, MULH, MULHSU, MULHU, DIV, DIVU, REM, REMU, MULW
 	} decoded_op_t;
 	
-	typedef enum u4 {
+	typedef enum u5 {
 		ALU_ADD, ALU_ADDW, ALU_SUB, ALU_SUBW, ALU_SLL, ALU_SLLW,
 		ALU_SRA, ALU_SRAW, ALU_SRL, ALU_SRLW,
 		ALU_AND, ALU_OR, ALU_XOR, ALU_PASSB,
-		ALU_SLT, ALU_SLTU
+		ALU_SLT, ALU_SLTU, ALU_PASSA
 	} alufunc_t;
 	
 	typedef enum u4 {
@@ -175,7 +175,7 @@ package decode_pkg;
 	} mult_t;
 
 	typedef enum u3 {
-		IMM_I, IMM_B, IMM_U, IMM_J, IMM_S
+		IMM_I, IMM_B, IMM_U, IMM_J, IMM_S, IMM_Z
 	} imm_t;
 
 	typedef enum u3 {

@@ -73,6 +73,9 @@ module alu
 			ALU_SLTU: begin
 				c = a < b;
 			end
+			ALU_PASSA: begin
+				c = a;
+			end
 			default: begin
 				c = 'x;
 			end

@@ -49,7 +49,7 @@ module memory
 	// assign dataM.csr = mreg.dataE.result;
 	always_comb begin
 		dataM.csr = 'x;
-		unique case(dataM.instr.ctl.csr_write_type)
+		if (mreg.dataE.instr.ctl.csrwrite) unique case(mreg.dataE.instr.ctl.csr_write_type)
 			CSR_CSRRC: begin
 				dataM.csr = mreg.dataE.csr & ~mreg.dataE.result;
 			end

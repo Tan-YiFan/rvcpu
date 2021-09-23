@@ -24,13 +24,13 @@ module execute
 	u64 aluout, multout;
 
 	always_comb begin : forwardAE
-		unique case(forward.forwardAE)
+		if (ereg.dataD.instr.ctl.pc_as_src1) alusrca = ereg.dataD.pc;
+		else unique case(forward.forwardAE)
 			FORWARDM: begin
 				alusrca = forward.dataM.result;
 			end
 			default: begin
-				alusrca = ereg.dataD.instr.ctl.pc_as_src1 ? 
-				ereg.dataD.pc : ereg.dataD.rd1;
+				alusrca = ereg.dataD.rd1;
 			end
 		endcase
 	end : forwardAE

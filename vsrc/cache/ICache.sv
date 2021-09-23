@@ -14,7 +14,7 @@ module ICache
 	localparam OFFSET_BITS = 11; // 2KB per line
 	localparam CBUS_WIDTH = 3;
 	localparam WORDS_PER_LINE = 2 ** (OFFSET_BITS - CBUS_WIDTH);
-	localparam INDEX_BITS = 4;
+	localparam INDEX_BITS = 5;
 	localparam NUM_LINES = 2 ** INDEX_BITS;
 
 	localparam type state_t = enum u1 {
@@ -22,89 +22,10 @@ module ICache
 		FETCH
 	};
 
-`ifdef VERILATOR1
-	/* verilator tracing_off */
-	/* verilator lint_off WIDTHCONCAT */
-	u64 [NUM_LINES-1:0][WORDS_PER_LINE-1:0] regs, regs_nxt;
-	u1 [NUM_LINES-1:0] valid, valid_nxt;
 	state_t state, state_nxt;
 	u64 counter, counter_nxt;
 
-	wire [INDEX_BITS-1:0] selected_idx = ireq.addr[14:11];
-
-	u1 hit;
-	assign hit = valid[selected_idx];
-
-	always_comb begin
-		{regs_nxt, valid_nxt, state_nxt, counter_nxt} = {regs, valid, state, counter};
-		counter_nxt = '0;
-		unique case(state)
-			INIT: begin
-				if (ireq.valid) begin
-					if (~hit) begin
-						// $display("miss");
-						state_nxt = FETCH;
-						counter_nxt = 1'b0;
-						if (cresp.ready) begin
-							$display("counter %x, data %x", counter, cresp.data);
-							regs_nxt[selected_idx][0] = cresp.data;
-							counter_nxt = 1'b1;
-						end
-					end
-				end
-			end
-			FETCH: begin
-				if (counter == 1000) state_nxt = '0;
-				else if (cresp.ready) begin
-					counter_nxt = counter + 1;
-					regs_nxt[selected_idx][counter] = cresp.data;
-					if (cresp.last) begin
-						// state_nxt = INIT;
-						counter_nxt = 1000;
-						valid_nxt[selected_idx] = 1'b1;
-
-					end
-				end
-			end
-			default: begin
-				
-			end
-		endcase
-		
-	end
-	
-
-	always_ff @(posedge clk) begin
-		if (reset) begin
-			{regs, valid, state, counter} <= '0;
-		end 
-		else begin
-			{regs, valid, state, counter} <= {regs_nxt, valid_nxt, state_nxt, counter_nxt};
-		end
-	end
-	
-	assign iresp.addr_ok = 1'b1;
-	assign iresp.data_ok = state_nxt == INIT;
-	
-	u64 selected_data;
-	assign iresp.data = ireq.addr[2] ? selected_data[63:32] : selected_data[31:0];
-
-	assign selected_data = regs[ireq.addr[14:11]][ireq.addr[10:3]];
-
-	assign creq.valid = state_nxt == FETCH;
-	assign creq.is_write = '0;
-	assign creq.size = MSIZE8;
-	assign creq.addr = {ireq.addr[63:11], 11'b0};
-	assign creq.strobe = '0;
-	assign creq.data = '0;
-	assign creq.len = MLEN256;
-	assign creq.burst = AXI_BURST_INCR;
-	
-`else
-	state_t state, state_nxt;
-	u64 counter, counter_nxt;
-
-	wire [INDEX_BITS-1:0] selected_idx = ireq.addr[14:11];
+	wire [INDEX_BITS-1:0] selected_idx = ireq.addr[OFFSET_BITS + INDEX_BITS -1 -: INDEX_BITS];
 
 	u1 hit, valid_read;
 	assign hit = valid_read;
@@ -115,7 +36,6 @@ module ICache
 	u1 valid_wen, data_wen;
 	always_comb begin
 		{state_nxt, counter_nxt} = {state, counter};
-		counter_nxt = '0;
 		valid_wen = '0;
 		data_wen = '0;
 		unique case(state)
@@ -133,7 +53,7 @@ module ICache
 					data_wen = 1'b1;
 					if (cresp.last) begin
 						state_nxt = INIT;
-						counter_nxt = 1000;
+						counter_nxt = '0;
 						valid_wen = '1;
 
 					end
@@ -200,9 +120,6 @@ module ICache
 	always_ff @(posedge clk) begin
 		// if (data_wen) $display("addr %x, wdata %x", ram_addr, cresp.data);
 	end
-	
-
-`endif
 
 	
 endmodule

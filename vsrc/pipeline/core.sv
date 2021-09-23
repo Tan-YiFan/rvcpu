@@ -60,7 +60,6 @@ module core
 			// 	if (ireq.addr > imax) imax <= ireq.addr;
 			// end
 			if (dreq.addr[31:28] == 4'd8 && dreq.valid) begin
-				// $display("%x", dreq.addr[31:0]);
 				// if (dreq.addr < dmin) dmin <= dreq.addr;
 				// if (dreq.addr > dmax) begin
 					// dmax <= dreq.addr;
@@ -260,21 +259,21 @@ module core
 	DifftestCSRState DifftestCSRState(
 		.clock              (clk),
 		.coreid             (0),
-		.priviledgeMode     (0),
-		.mstatus            (0),
-		.sstatus            (0),
-		.mepc               (0),
+		.priviledgeMode     (3),
+		.mstatus            (csr.regs_nxt.mstatus),
+		.sstatus            (csr.regs_nxt.mstatus & 64'h800000030001e000),
+		.mepc               (csr.regs_nxt.mepc),
 		.sepc               (0),
-		.mtval              (0),
+		.mtval              (csr.regs_nxt.mtval),
 		.stval              (0),
-		.mtvec              (0),
+		.mtvec              (csr.regs_nxt.mtvec),
 		.stvec              (0),
-		.mcause             (0),
+		.mcause             (csr.regs_nxt.mcause),
 		.scause             (0),
 		.satp               (0),
-		.mip                (0),
+		.mip                (csr.regs_nxt.mip),
 		.mie                (0),
-		.mscratch           (0),
+		.mscratch           (csr.regs_nxt.mscratch),
 		.sscratch           (0),
 		.mideleg            (0),
 		.medeleg            (0)
@@ -322,7 +321,7 @@ module core
 		if (~reset) begin
 			// $display("ireq: valid %d, pc %x", ireq.valid, ireq.addr);
 			if (iresp.data_ok) begin
-				// $display("pc 0x%x, raw_instr 0x%x", ireq.addr, iresp.data);
+				// $display("pc %x, raw_instr %x", ireq.addr, iresp.data);
 			end
 		end
 	end
