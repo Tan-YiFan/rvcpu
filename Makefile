@@ -15,8 +15,8 @@ else
 endif
 
 build/SimTop.v: $(SCALA_FILE)
-ifeq ($(SCALA_CODE), "true")
 	mkdir -p build
+ifeq ($(SCALA_CODE), "true")
 	mill chiselModule.runMain $(SCALA_OPTS)
 endif
 	cp $(VERILOG_FILE) $(SYSTEMVERILOG_FILE) build
