@@ -1,8 +1,11 @@
 `ifndef __IBUSTOCBUS_SV
 `define __IBUSTOCBUS_SV
 
-
+`ifdef VERILATOR
 `include "include/interface.svh"
+`else
+`include "interface.svh"
+`endif
 
 module IBusToCBus 
     import common::*;(
