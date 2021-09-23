@@ -1,10 +1,10 @@
 stages:
-  - chk_scala
-  - sim_src
-  - run_sim
   - fpga_src
   - bit_gen
   - fpga_eval
+  - chk_scala
+  - sim_src
+  - run_sim
 
 variables:
     GIT_SUBMODULE_STRATEGY: recursive
