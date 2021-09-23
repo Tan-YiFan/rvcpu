@@ -27,10 +27,14 @@ module VTop
     cbus_resp_t icresp, dcresp;
 
     core core(.*);
-    // IBusToCBus icvt(.*);
-	ICache ICache(.creq(icreq), .cresp(icresp), .*);
-    // DBusToCBus dcvt(.*);
-	DCache DCache(.creq(dcreq), .cresp(dcresp), .*);
+	if (USE_ICACHE == 0)
+    	IBusToCBus icvt(.*);
+	else
+		ICache ICache(.creq(icreq), .cresp(icresp), .*);
+	if (USE_DCACHE == 0)
+    	DBusToCBus dcvt(.*);
+	else
+		DCache DCache(.creq(dcreq), .cresp(dcresp), .*);
 
     /**
      * TODO (Lab2) replace mux with your own arbiter :)
