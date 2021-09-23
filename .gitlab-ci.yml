@@ -25,8 +25,7 @@ create_emu:
   script:
     - export NOOP_HOME=$(pwd)
     - make EMU_TRACE=1 emu
-  needs:
-    - scala_check
+
   artifacts:
     name: "$CI_JOB_STAGE-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
     when: always
@@ -99,8 +98,6 @@ create_verilog:
   script:
     - export NOOP_HOME=$(pwd)
     - make BOARD=nf_card verilog
-  needs:
-    - scala_check
   artifacts:
     name: "$CI_JOB_STAGE-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
     when: always
