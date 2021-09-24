@@ -13,11 +13,11 @@ module DCache
     input  cbus_resp_t cresp
 );
 	localparam ALIGN_BITS = 3;
-	localparam OFFSET_BITS = 11; // 2KB per line
+	localparam OFFSET_BITS = 7; // 2KB per line
 	localparam CBUS_WIDTH = 3;
 	localparam WORDS_PER_LINE = 2 ** (OFFSET_BITS - CBUS_WIDTH);
 
-	localparam INDEX_BITS = 8;
+	localparam INDEX_BITS = 19 - OFFSET_BITS;
 	localparam NUM_LINES = 2 ** INDEX_BITS;
 	localparam TAG_WIDTH = 28 - OFFSET_BITS - INDEX_BITS;
 	`ASSERT(TAG_WIDTH + INDEX_BITS + OFFSET_BITS >= 28);
@@ -128,11 +128,11 @@ module DCache
 	assign creq.is_write = (state == UNCACHED && |dreq.strobe) || state == WRITEBACK;
 	assign creq.size = state == UNCACHED ? dreq.size : MSIZE8;
 	assign creq.addr = state == UNCACHED ? dreq.addr : 
-	state == WRITEBACK ? {32'b0, 4'd8, meta_read.tag, index, 11'b0} : {dreq.addr[63:OFFSET_BITS], 11'b0};
+	state == WRITEBACK ? {32'b0, 4'd8, meta_read.tag, index, {OFFSET_BITS{1'b0}}} : {dreq.addr[63:OFFSET_BITS], {OFFSET_BITS{1'b0}}};
 	// assign creq.addr = dreq.addr;
 	assign creq.strobe = state == UNCACHED ? dreq.strobe : '1;
 	assign creq.data = state == UNCACHED ? dreq.data : selected_data;
-	assign creq.len = state == UNCACHED ? MLEN1 : MLEN256;
+	assign creq.len = state == UNCACHED ? MLEN1 : MLEN16;
 	assign creq.burst = state == UNCACHED ? AXI_BURST_FIXED : AXI_BURST_INCR;
 
 	RAM_SinglePort #(

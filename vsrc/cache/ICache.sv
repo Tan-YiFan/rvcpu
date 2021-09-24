@@ -11,10 +11,10 @@ module ICache
     input  cbus_resp_t cresp
 );
 	localparam ALIGN_BITS = 3;
-	localparam OFFSET_BITS = 11; // 2KB per line
+	localparam OFFSET_BITS = 7; // 2KB per line
 	localparam CBUS_WIDTH = 3;
 	localparam WORDS_PER_LINE = 2 ** (OFFSET_BITS - CBUS_WIDTH);
-	localparam INDEX_BITS = 5;
+	localparam INDEX_BITS = 16 - OFFSET_BITS;
 	localparam NUM_LINES = 2 ** INDEX_BITS;
 
 	localparam type state_t = enum u1 {
@@ -84,10 +84,10 @@ module ICache
 	assign creq.valid = state == FETCH;
 	assign creq.is_write = '0;
 	assign creq.size = MSIZE8;
-	assign creq.addr = {ireq.addr[63:11], 11'b0};
+	assign creq.addr = {ireq.addr[63:OFFSET_BITS], {OFFSET_BITS{1'b0}}};
 	assign creq.strobe = '0;
 	assign creq.data = '0;
-	assign creq.len = MLEN256;
+	assign creq.len = MLEN16;
 	assign creq.burst = AXI_BURST_INCR;
 
 	RAM_SinglePort #(
