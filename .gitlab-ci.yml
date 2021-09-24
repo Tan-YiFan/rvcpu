@@ -22,6 +22,8 @@ scala_check:
 
 create_emu:
   stage: sim_src
+  needs: 
+    - copy_fpga_am
   script:
     - export NOOP_HOME=$(pwd)
     - make EMU_TRACE=1 emu
