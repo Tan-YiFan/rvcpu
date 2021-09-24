@@ -31,7 +31,7 @@ module RAM_SinglePort #(
     output rword_t   rdata
 );
 	/* verilator tracing_off */
-`ifdef __RAM_SINGLEPORT_SV
+`ifdef VERILATOR
 	rview_t mem [NUM_WORDS-1:0];
 	initial begin
 		for (int i = 0; i < NUM_WORDS; i++) begin
