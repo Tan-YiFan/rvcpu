@@ -39,7 +39,22 @@ module RAM_SinglePort #(
 		end
 		
 	end
-	assign rdata = mem[addr >> $clog2(BYTES_PER_WORD)];
+	if (READ_LATENCY == 0)
+		assign rdata = mem[addr >> $clog2(BYTES_PER_WORD)];
+	else begin
+		rword_t reads [READ_LATENCY-1:0];
+		always_ff @(posedge clk) begin
+			reads[0] <= mem[addr >> $clog2(BYTES_PER_WORD)];
+		end
+		
+		for (genvar i = 1; i < READ_LATENCY; i++) begin
+			always_ff @(posedge clk) begin
+				reads[i] <= reads[i-1];
+			end
+		end
+		assign rdata = reads[READ_LATENCY-1];
+		
+	end
 
 	always_ff @(posedge clk) begin
 		if (en)
