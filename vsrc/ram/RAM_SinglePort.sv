@@ -9,9 +9,9 @@ module RAM_SinglePort #(
 	parameter READ_LATENCY = 1,
 	
 	localparam WORD_WIDTH = DATA_WIDTH,
-	localparam NUM_BYTES = NUM_BITS / BYTE_WIDTH,
-	localparam NUM_BITS = NUM_WORDS * DATA_WIDTH,
 	localparam NUM_WORDS = 2 ** ADDR_WIDTH,
+	localparam NUM_BITS = NUM_WORDS * DATA_WIDTH,
+	localparam NUM_BYTES = NUM_BITS / BYTE_WIDTH,
 	localparam BYTES_PER_WORD = DATA_WIDTH / BYTE_WIDTH,
 	// types
 	localparam type raddr_t = logic[ADDR_WIDTH-1:0],
