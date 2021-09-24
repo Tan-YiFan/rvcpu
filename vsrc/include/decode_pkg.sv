@@ -204,6 +204,7 @@ package decode_pkg;
 		u1 csrwrite;
 		csr_write_t csr_write_type;
 		u1 is_multdiv;
+		u1 is_mret;
 	} control_t;
 	
 	typedef struct packed {

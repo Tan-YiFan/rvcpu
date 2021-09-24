@@ -17,7 +17,7 @@ module DCache
 	localparam CBUS_WIDTH = 3;
 	localparam WORDS_PER_LINE = 2 ** (OFFSET_BITS - CBUS_WIDTH);
 
-	localparam INDEX_BITS = 9;
+	localparam INDEX_BITS = 8;
 	localparam NUM_LINES = 2 ** INDEX_BITS;
 	localparam TAG_WIDTH = 28 - OFFSET_BITS - INDEX_BITS;
 	`ASSERT(TAG_WIDTH + INDEX_BITS + OFFSET_BITS >= 28);
@@ -46,8 +46,8 @@ module DCache
 	wire [INDEX_BITS-1:0] selected_idx = index;
 	line_meta_t meta_read;
 
-	wire [OFFSET_BITS + INDEX_BITS - 1:0] ram_addr = state == INIT ?
-	{dreq.addr[OFFSET_BITS + INDEX_BITS - 1:ALIGN_BITS], 3'b00} : {index, counter[OFFSET_BITS - ALIGN_BITS - 1: 0], {ALIGN_BITS{1'b0}}};
+	wire [OFFSET_BITS + INDEX_BITS - ALIGN_BITS - 1:0] ram_addr = state == INIT ?
+	{dreq.addr[OFFSET_BITS + INDEX_BITS - 1:ALIGN_BITS]} : {index, counter[OFFSET_BITS - ALIGN_BITS - 1: 0]};
 	strobe_t data_wen;
 	u1 meta_wen;
 	line_meta_t meta_write;
@@ -150,7 +150,7 @@ module DCache
 	);
 
 	RAM_SinglePort #(
-		.ADDR_WIDTH(OFFSET_BITS + INDEX_BITS),
+		.ADDR_WIDTH(OFFSET_BITS + INDEX_BITS - ALIGN_BITS),
 		.DATA_WIDTH(64),
 		.BYTE_WIDTH(8),
 		.MEM_TYPE(0),

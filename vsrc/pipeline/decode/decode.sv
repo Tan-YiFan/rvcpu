@@ -82,6 +82,7 @@ module decode
 	assign pcselect.branch_taken = branch_taken;
 	assign pcselect.jr = instr.ctl.jr;
 	assign pcselect.jump = instr.ctl.jump;
+	assign pcselect.is_mret = instr.ctl.is_mret;
 
 	assign regfile.ra1 = instr.rs1;
 	assign regfile.ra2 = instr.rs2;

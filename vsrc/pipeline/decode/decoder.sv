@@ -573,7 +573,8 @@ module decoder
 			OP_PRIV: begin
 				unique case(f3)
 					F3_ECALL_EBREAK: begin
-						
+						if (raw_instr == 32'b0011000_00010_00000_000_00000_1110011)
+							ctl.is_mret = 1'b1;
 					end
 					F3_CSRRW: begin
 						op = CSRRW;

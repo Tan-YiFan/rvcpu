@@ -13,7 +13,8 @@ module csr
 	import decode_pkg::*;
 	import csr_pkg::*;(
 	input logic clk, reset,
-	csr_intf.csr self
+	csr_intf.csr self,
+	pcselect_intf.csr pcselect
 	// exception_intf.csr exception
 
 );
@@ -70,7 +71,13 @@ module csr
 				
 			endcase
 			regs_nxt.mstatus.sd = regs_nxt.mstatus.fs != 0;
-		end else begin end
+		end else if (self.is_mret) begin
+			regs_nxt.mstatus.mie = regs_nxt.mstatus.mpie;
+			regs_nxt.mstatus.mpie = 1'b1;
+			regs_nxt.mstatus.mpp = 2'b0;
+			regs_nxt.mstatus.xs = 0;
+		end
+		else begin end
 		// Exception: M stage
 		// if (exception.valid) begin
 		// 	regs_nxt.mcause[XLEN-1] = exception.interrupt_valid;
@@ -81,7 +88,7 @@ module csr
 		// 	regs_nxt.mstatus.mie = 1'b0;
 		// end
 	end
-	
+	assign pcselect.mepc = regs.mepc;
 	
 	
 endmodule

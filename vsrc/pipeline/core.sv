@@ -147,8 +147,8 @@ module core
 
 	csr csr (
 		.clk, .reset,
-		.self(csr_intf.csr)
-
+		.self(csr_intf.csr),
+		.pcselect(pcselect_intf.csr)
 	);
 
 	pipereg #(.T(u64), .INIT(PCINIT)) freg(

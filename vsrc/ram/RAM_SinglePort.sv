@@ -9,9 +9,9 @@ module RAM_SinglePort #(
 	parameter READ_LATENCY = 1,
 	
 	localparam WORD_WIDTH = DATA_WIDTH,
-	localparam NUM_BYTES = 2 ** ADDR_WIDTH,
-	localparam NUM_BITS = NUM_BYTES * BYTE_WIDTH,
-	localparam NUM_WORDS = NUM_BITS / WORD_WIDTH,
+	localparam NUM_BYTES = NUM_BITS / BYTE_WIDTH,
+	localparam NUM_BITS = NUM_WORDS * DATA_WIDTH,
+	localparam NUM_WORDS = 2 ** ADDR_WIDTH,
 	localparam BYTES_PER_WORD = DATA_WIDTH / BYTE_WIDTH,
 	// types
 	localparam type raddr_t = logic[ADDR_WIDTH-1:0],
@@ -40,11 +40,11 @@ module RAM_SinglePort #(
 		
 	end
 	if (READ_LATENCY == 0)
-		assign rdata = mem[addr >> $clog2(BYTES_PER_WORD)];
+		assign rdata = mem[addr];
 	else begin
 		rword_t reads [READ_LATENCY-1:0];
 		always_ff @(posedge clk) begin
-			reads[0] <= mem[addr >> $clog2(BYTES_PER_WORD)];
+			reads[0] <= mem[addr];
 		end
 		
 		for (genvar i = 1; i < READ_LATENCY; i++) begin
@@ -60,7 +60,7 @@ module RAM_SinglePort #(
 		if (en)
 			for (int i = 0; i < BYTES_PER_WORD; i++)
 				if (strobe[i])
-					mem[addr >> $clog2(BYTES_PER_WORD)].lanes[i] <= wdata.lanes[i];
+					mem[addr].lanes[i] <= wdata.lanes[i];
 	end
 	
 `else

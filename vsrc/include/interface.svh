@@ -32,12 +32,15 @@ interface pcselect_intf();
 
 	u64 pcplus4F;
 
-	modport pcselect(input pcplus4F, pcbranch, pcjr, pcjump,
-			 input branch_taken, jr, jump);
+	u1 is_mret;
+	u64 mepc;
+
+	modport pcselect(input pcplus4F, pcbranch, pcjr, pcjump, mepc,
+			 input branch_taken, jr, jump, is_mret);
 	modport fetch(output pcplus4F);
 	modport decode(output pcbranch, pcjr, pcjump,
-		       output branch_taken, jr, jump);
-			 
+		       output branch_taken, jr, jump, is_mret);
+	modport csr(output mepc);
 endinterface
 
 interface freg_intf();
@@ -140,10 +143,12 @@ interface csr_intf();
 	u1 valid;
 	csr_addr_t wa;
 	word_t wd;
+
+	u1 is_mret;
 	
 	modport decode(output ra, input rd);
-	modport writeback(output valid, wa, wd);
-	modport csr(input ra, valid, wa, wd, output rd);
+	modport writeback(output valid, wa, wd, is_mret);
+	modport csr(input ra, valid, wa, wd, is_mret, output rd);
 endinterface
 
 interface regfile_intf();

@@ -48,6 +48,7 @@ module writeback
     assign csr.valid = wreg.dataM.instr.ctl.csrwrite;
     assign csr.wa = wreg.dataM.instr.csr_addr;
     assign csr.wd = wreg.dataM.csr;
+	assign csr.is_mret = wreg.dataM.instr.ctl.is_mret;
 
 endmodule
 
