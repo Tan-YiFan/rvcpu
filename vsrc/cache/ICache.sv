@@ -94,7 +94,7 @@ module ICache
 		.ADDR_WIDTH(INDEX_BITS),
 		.DATA_WIDTH(1),
 		.BYTE_WIDTH(1),
-		.MEM_TYPE("distributed"),
+		.MEM_TYPE(0),
 		.READ_LATENCY(0)
 	) valid_ram (
 		.clk, .en(1'b1),
@@ -107,8 +107,8 @@ module ICache
 		.ADDR_WIDTH(OFFSET_BITS + INDEX_BITS - ALIGN_BITS),
 		.DATA_WIDTH(64),
 		.BYTE_WIDTH(64),
-		.MEM_TYPE("auto"),
-		.READ_LATENCY(1)
+		.MEM_TYPE(0),
+		.READ_LATENCY(0)
 	) data_ram (
 		.clk,  .en(1'b1),
 		.addr(ram_addr),

@@ -17,7 +17,7 @@ module DCache
 	localparam CBUS_WIDTH = 3;
 	localparam WORDS_PER_LINE = 2 ** (OFFSET_BITS - CBUS_WIDTH);
 
-	localparam INDEX_BITS = 10;
+	localparam INDEX_BITS = 6;
 	localparam NUM_LINES = 2 ** INDEX_BITS;
 	localparam TAG_WIDTH = 28 - OFFSET_BITS - INDEX_BITS;
 	`ASSERT(TAG_WIDTH + INDEX_BITS + OFFSET_BITS >= 28);
@@ -140,7 +140,7 @@ module DCache
 		.DATA_WIDTH(TAG_WIDTH + 1),
 		.BYTE_WIDTH(TAG_WIDTH + 1),
 		.READ_LATENCY(0),
-		.MEM_TYPE(1)
+		.MEM_TYPE(0)
 	) meta_ram (
 		.clk, .en(1'b1),
 		.addr(selected_idx),
@@ -153,8 +153,8 @@ module DCache
 		.ADDR_WIDTH(OFFSET_BITS + INDEX_BITS),
 		.DATA_WIDTH(64),
 		.BYTE_WIDTH(8),
-		.MEM_TYPE(3),
-		.READ_LATENCY(1)
+		.MEM_TYPE(0),
+		.READ_LATENCY(0)
 	) data_ram (
 		.clk,  .en(1'b1),
 		.addr(ram_addr),
