@@ -14,7 +14,7 @@ module ICache
 	localparam OFFSET_BITS = COMMON_OFFSET_BITS; // 2KB per line
 	localparam CBUS_WIDTH = 3;
 	localparam WORDS_PER_LINE = 2 ** (OFFSET_BITS - CBUS_WIDTH);
-	localparam INDEX_BITS = 16 - OFFSET_BITS;
+	localparam INDEX_BITS = ICACHE_BITS - OFFSET_BITS;
 	localparam NUM_LINES = 2 ** INDEX_BITS;
 
 	localparam type state_t = enum u1 {

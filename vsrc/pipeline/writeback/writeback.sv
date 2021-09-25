@@ -16,7 +16,8 @@ module writeback
     regfile_intf.writeback regfile,
     hazard_intf.writeback hazard,
     forward_intf.writeback forward,
-    csr_intf.writeback csr
+    csr_intf.writeback csr,
+	input u64 rd
     
     // debug
 //     output word_t pc
@@ -26,7 +27,7 @@ module writeback
     word_t result;
     word_t readdataW;
     readdata readdata(
-        ._rd(wreg.dataM.rd),
+        ._rd(rd),
         .msize(wreg.dataM.instr.ctl.msize),
         .addr(wreg.dataM.result[2:0]),
 	.mem_unsigned(wreg.dataM.instr.ctl.mem_unsigned),

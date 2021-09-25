@@ -10,6 +10,8 @@ package config_pkg;
 	parameter USE_DCACHE = USE_CACHE;
 	parameter ADD_LATENCY = 1'b0;
 	parameter AXI_BURST_NUM = 128;
+	parameter ICACHE_BITS = 16;
+	parameter DCACHE_BITS = 21;
 endpackage
 
 `endif

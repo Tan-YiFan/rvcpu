@@ -128,7 +128,8 @@ module core
 		.regfile(regfile_intf.writeback),
 		.hazard(hazard_intf.writeback),
 		.forward(forward_intf.writeback),
-		.csr(csr_intf.writeback)
+		.csr(csr_intf.writeback),
+		.rd(dresp.data)
 	);
 
 	regfile regfile(

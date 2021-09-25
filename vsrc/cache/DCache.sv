@@ -1,6 +1,7 @@
 `ifdef VERILATOR
 `include "include/common.sv"
 `include "ram/RAM_SinglePort.sv"
+`include "ram/RAM_SimpleDualPort.sv"
 `endif
 
 module DCache 
@@ -17,7 +18,7 @@ module DCache
 	localparam CBUS_WIDTH = 3;
 	localparam WORDS_PER_LINE = 2 ** (OFFSET_BITS - CBUS_WIDTH);
 
-	localparam INDEX_BITS = 18 - OFFSET_BITS;
+	localparam INDEX_BITS = DCACHE_BITS - OFFSET_BITS;
 	localparam NUM_LINES = 2 ** INDEX_BITS;
 	localparam TAG_WIDTH = 28 - OFFSET_BITS - INDEX_BITS;
 	`ASSERT(TAG_WIDTH + INDEX_BITS + OFFSET_BITS >= 28);
@@ -46,8 +47,11 @@ module DCache
 	wire [INDEX_BITS-1:0] selected_idx = index;
 	line_meta_t meta_read;
 
+	logic [OFFSET_BITS-ALIGN_BITS-1:0] buffer_counter, buffer_counter_nxt, buffer_counter_delayed;
 	wire [OFFSET_BITS + INDEX_BITS - ALIGN_BITS - 1:0] ram_addr = state == INIT ?
-	{dreq.addr[OFFSET_BITS + INDEX_BITS - 1:ALIGN_BITS]} : {index, counter[OFFSET_BITS - ALIGN_BITS - 1: 0]};
+	{dreq.addr[OFFSET_BITS + INDEX_BITS - 1:ALIGN_BITS]} :
+	state == WRITEBACK ? {index, buffer_counter[OFFSET_BITS - ALIGN_BITS - 1: 0]} :
+	{index, counter[OFFSET_BITS - ALIGN_BITS - 1: 0]};
 	strobe_t data_wen;
 	u1 meta_wen;
 	line_meta_t meta_write;
@@ -55,6 +59,10 @@ module DCache
 	assign meta_write.tag = tag;
 	assign hit = meta_read.valid && tag == meta_read.tag;
 	wire dirty = tag != meta_read.tag && meta_read.valid;
+	
+	u64 buffer_read;
+	
+
 	always_comb begin
 		state_nxt = state;
 		counter_nxt = counter;
@@ -115,12 +123,36 @@ module DCache
 			counter <= counter_nxt;
 		end
 	end
+
+	always_comb begin
+		buffer_counter_nxt = '0;
+		unique case(state)
+			WRITEBACK: begin
+				buffer_counter_nxt = buffer_counter + 1;
+			end
+			default: begin
+				
+			end
+		endcase
+	end
+
+	always_ff @(posedge clk) begin
+		if (reset) begin
+			buffer_counter <= '0;
+			buffer_counter_delayed <= '0;
+		end else begin
+			buffer_counter <= buffer_counter_nxt;
+			buffer_counter_delayed <= buffer_counter;
+		end
+	end
+	
+	
 	
 	assign dresp.addr_ok = 1'b1;
 	assign dresp.data_ok = (uncached && cresp.ready) || (~uncached && state == INIT && hit);
 	
 	u64 selected_data;
-	assign dresp.data = uncached ? cresp.data : selected_data;
+	// assign dresp.data = uncached && dreq.valid ? cresp.data : selected_data;
 
 	
 
@@ -131,7 +163,7 @@ module DCache
 	state == WRITEBACK ? {32'b0, 4'd8, meta_read.tag, index, {OFFSET_BITS{1'b0}}} : {dreq.addr[63:OFFSET_BITS], {OFFSET_BITS{1'b0}}};
 	// assign creq.addr = dreq.addr;
 	assign creq.strobe = state == UNCACHED ? dreq.strobe : '1;
-	assign creq.data = state == UNCACHED ? dreq.data : selected_data;
+	assign creq.data = state == UNCACHED ? dreq.data : buffer_read;
 	assign creq.len = state == UNCACHED ? MLEN1 : AXI_BURST_LEN;
 	assign creq.burst = state == UNCACHED ? AXI_BURST_FIXED : AXI_BURST_INCR;
 
@@ -153,8 +185,8 @@ module DCache
 		.ADDR_WIDTH(OFFSET_BITS + INDEX_BITS - ALIGN_BITS),
 		.DATA_WIDTH(64),
 		.BYTE_WIDTH(8),
-		.MEM_TYPE(0),
-		.READ_LATENCY(0)
+		.MEM_TYPE(3),
+		.READ_LATENCY(1)
 	) data_ram (
 		.clk,  .en(1'b1),
 		.addr(ram_addr),
@@ -163,9 +195,32 @@ module DCache
 		.rdata(selected_data)
 	);
 
+	RAM_SimpleDualPort #(
+		.ADDR_WIDTH(OFFSET_BITS - ALIGN_BITS),
+		.DATA_WIDTH(64),
+		.BYTE_WIDTH(64),
+		.MEM_TYPE(0),
+		.READ_LATENCY(0)
+	) wb_buffer (
+		.clk, .en(1'b1),
+		.raddr({index, counter[OFFSET_BITS - ALIGN_BITS - 1: 0]}),
+		.waddr(buffer_counter_delayed),
+		.strobe(state == WRITEBACK),
+		.wdata(selected_data),
+		.rdata(buffer_read)
+	);
+
+	u64 data_delay;
+	u1 uncached_delay;
+	always_ff @(posedge clk) begin
+		data_delay <= cresp.data;
+		uncached_delay <= uncached;
+	end
+	assign dresp.data = uncached_delay ? data_delay : selected_data;
+	
 	always_ff @(posedge clk) begin
 		// if (~reset && dreq.valid) $display("addr %x, state %d, counter_nxt %x", dreq.addr[31:0], state_nxt, counter_nxt);
-		// if (~reset && dreq.valid && hit) $display("addr %x, data %x", dreq.addr, dresp.data);
+		// if (~reset && dreq.valid && hit) $display("addr %x, data %x %x", dreq.addr, dreq.data, data_delay);
 		// if (~reset && state_nxt == FETCH && data_wen) $display("ram_addr %x, wdata %x", ram_addr, cresp.data);
 		// if (~reset && state == UNCACHED) $display("%x, strobe %x, valid %x, ready %x, state_nxt %x", creq.addr, creq.is_write, creq.valid, cresp.ready, state_nxt);
 		// if (dreq.addr == 64'h40600004) $display("oreq.addr %x, cresp.ready %x, state_nxt %x", creq.addr, cresp.ready, state_nxt);
