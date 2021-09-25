@@ -8,7 +8,7 @@ package config_pkg;
 	parameter USE_CACHE = 1'b1;
 	parameter USE_ICACHE = USE_CACHE;
 	parameter USE_DCACHE = USE_CACHE;
-	parameter ADD_LATENCY = 1'b0;
+	parameter ADD_LATENCY = 1'b1;
 	parameter AXI_BURST_NUM = 128;
 	parameter ICACHE_BITS = 16;
 	parameter DCACHE_BITS = 21;
