@@ -122,7 +122,7 @@ module CBusToSRAM
 						end
 						AXI_BURST_INCR: begin
 							`ASSERT(oreq.size == MSIZE8);
-							if (USE_CACHE) begin
+							if (ADD_LATENCY) begin
 								if (delay_nxt != DELAY) delay_nxt = delay + 1;
 								else begin
 									delay_nxt = '0;
