@@ -20,6 +20,8 @@ module multicycle (
 	u64 c_m, c_d;
 	u64 a_1, b_1;
 	u64 is_multdiv_1;
+	localparam type state_t = enum logic {INIT, DOING};
+	state_t state, state_nxt;
 	divider_top divider_top_inst (
 		.clk, .reset(state == INIT),
 		.a(a_1), .b(b_1),
@@ -59,8 +61,7 @@ module multicycle (
 
 	localparam MULT_DELAY = 3;
 	localparam DIV_DELAY = 66;
-	localparam type state_t = enum logic {INIT, DOING};
-	state_t state, state_nxt;
+	
 	u7 counter, counter_nxt;
 	always_ff @(posedge clk) begin
 		if (reset | flush) begin
