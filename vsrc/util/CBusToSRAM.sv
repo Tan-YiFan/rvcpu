@@ -39,11 +39,12 @@ module CBusToSRAM
 	assign oresp.ready = delay_nxt == '0;
 	assign oresp.last = state_nxt == INIT;
 	// assign oresp.data = rdata;
-	u128 cnter, cnter1;
+	u128 cnter, cnter1, cnter2;
 	always_ff @(posedge clk) begin
-		if (reset) {cnter, cnter1} <= '0;
+		if (reset) {cnter, cnter1, cnter2} <= '0;
 		else begin
 			cnter1 <= cnter1 + 1;
+			cnter2 <= cnter1 + 1;
 			if (cnter1 == 10000) begin
 				cnter1 <= '0;
 				cnter <= cnter + 1;

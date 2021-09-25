@@ -18,18 +18,20 @@ module multicycle (
 	output u1 mult_ok
 );
 	u64 c_m, c_d;
+	u64 a_1, b_1;
+	u64 is_multdiv_1;
 	divider_top divider_top_inst (
-		.clk, .reset,
-		.a, .b,
+		.clk, .reset(state == INIT),
+		.a(a_1), .b(b_1),
 		.c(c_d),
-		.is_signed(mult_type == MULT_DIV || mult_type == MULT_REM),
-		.get_div(mult_type == MULT_DIV || mult_type == MULT_DIVU),
-		.valid(is_multdiv)
+		.is_signed(mult_type == MULT_DIV || mult_type == MULT_REM || mult_type == MULT_DIVW || mult_type == MULT_REMW),
+		.get_div(mult_type == MULT_DIV || mult_type == MULT_DIVU || mult_type == MULT_DIVUW || mult_type == MULT_DIVW),
+		.valid(is_multdiv_1)
 	);
 
 	multiplier_top multiplier_top_inst (
 		.clk, .reset,
-		.a, .b,
+		.a(a_1), .b(b_1),
 		.c(c_m),
 		.is_signed(1'b1)
 	);
@@ -55,8 +57,8 @@ module multicycle (
 		endcase
 	end
 
-	localparam MULT_DELAY = 2;
-	localparam DIV_DELAY = 65;
+	localparam MULT_DELAY = 3;
+	localparam DIV_DELAY = 66;
 	localparam type state_t = enum logic {INIT, DOING};
 	state_t state, state_nxt;
 	u7 counter, counter_nxt;
@@ -69,6 +71,19 @@ module multicycle (
 			counter <= counter_nxt;
 		end
 	end
+
+	always_ff @(posedge clk) begin
+		if (reset | flush) begin
+			a_1 <= '0;
+			b_1 <= '0;
+			is_multdiv_1 <= '0;
+		end else if (state == INIT) begin
+			a_1 <= a;
+			b_1 <= b;
+			is_multdiv_1 <= is_multdiv;
+		end
+	end
+	
 
 	always_comb begin : multicycle_counter
 		state_nxt = state;
