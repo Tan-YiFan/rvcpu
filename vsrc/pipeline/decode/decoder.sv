@@ -309,22 +309,22 @@ module decoder
 						F3_DIV: begin
 							ctl.regwrite = 1'b1;
 							ctl.is_multdiv = 1'b1;
-							ctl.mult_type = MULT_DIV;
+							ctl.mult_type = MULT_DIVW;
 						end
 						F3_DIVU: begin
 							ctl.regwrite = 1'b1;
 							ctl.is_multdiv = 1'b1;
-							ctl.mult_type = MULT_DIVU;
+							ctl.mult_type = MULT_DIVUW;
 						end
 						F3_REM: begin
 							ctl.regwrite = 1'b1;
 							ctl.is_multdiv = 1'b1;
-							ctl.mult_type = MULT_REM;
+							ctl.mult_type = MULT_REMW;
 						end
 						F3_REMU: begin
 							ctl.regwrite = 1'b1;
 							ctl.is_multdiv = 1'b1;
-							ctl.mult_type = MULT_REMU;
+							ctl.mult_type = MULT_REMUW;
 						end
 						default: begin
 							

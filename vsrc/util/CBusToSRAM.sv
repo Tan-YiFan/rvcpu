@@ -56,6 +56,7 @@ module CBusToSRAM
 		unique case(oreq.addr)
 			64'h40600008: oresp.data = '0;
 			64'h3800bff8: oresp.data = cnter;
+			64'h20003000: oresp.data = cnter;
 			default: begin
 				
 			end

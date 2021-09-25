@@ -71,8 +71,6 @@ package decode_pkg;
 	parameter u7 OP_S     = 7'b0100011;
 	parameter u7 OP_FENCE = 7'b0001111;
 	parameter u7 OP_PRIV  = 7'b1110011;
-	parameter u7 OP_MUL   = 7'b0110011;
-	parameter u7 OP_MULW  = 7'b0111011;
 
 	// func7
 	// add, sub
@@ -171,7 +169,8 @@ package decode_pkg;
 	
 	typedef enum u4 {
 		MULT_MUL, MULT_MULH, MULT_MULHSU, MULT_MULHU,
-		MULT_DIV, MULT_DIVU, MULT_REM, MULT_REMU, MULT_MULW
+		MULT_DIV, MULT_DIVU, MULT_REM, MULT_REMU, MULT_MULW,
+		MULT_DIVW, MULT_DIVUW, MULT_REMW, MULT_REMUW
 	} mult_t;
 
 	typedef enum u3 {

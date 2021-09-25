@@ -46,6 +46,9 @@ module multicycle (
 			MULT_DIV, MULT_DIVU, MULT_REM, MULT_REMU: begin
 				c = c_d;
 			end
+			MULT_DIVW, MULT_DIVUW, MULT_REMW, MULT_REMUW: begin
+				c = {{32{c_d[31]}}, c_d[31:0]};
+			end
 			default: begin
 				
 			end
@@ -78,7 +81,7 @@ module multicycle (
 					counter_nxt = MULT_DELAY;
 					state_nxt = DOING;
 				end
-				MULT_DIV, MULT_DIVU, MULT_REM, MULT_REMU: begin
+				MULT_DIV, MULT_DIVU, MULT_REM, MULT_REMU, MULT_DIVW, MULT_DIVUW, MULT_REMW, MULT_REMUW: begin
 					counter_nxt = DIV_DELAY;
 					state_nxt = DOING;
 				end
