@@ -6,6 +6,7 @@
 import config_pkg::*;
 package common;
 	// parameters
+	import config_pkg::*;
 	parameter XLEN = 64;
 	parameter MXLEN = XLEN;
 	parameter LINK_REG_ID = 1;
@@ -137,6 +138,17 @@ package common;
      MLEN256 = 8'hff
 
  } mlen_t;
+
+ parameter mlen_t AXI_BURST_LEN = AXI_BURST_NUM == 16 ? MLEN16 :
+ 								  AXI_BURST_NUM == 32 ? MLEN32 :
+								  AXI_BURST_NUM == 64 ? MLEN64 :
+								  AXI_BURST_NUM == 128 ? MLEN128 :
+								  AXI_BURST_NUM == 256 ? MLEN256 : MLEN1;
+ parameter COMMON_OFFSET_BITS = AXI_BURST_NUM == 16 ? 7 :
+						  		AXI_BURST_NUM == 32 ? 8 :
+						  		AXI_BURST_NUM == 64 ? 9 :
+						  		AXI_BURST_NUM == 128 ? 10 :
+						  		AXI_BURST_NUM == 256 ? 11 : 1;
  
  // a 4-bit mask for memory r/w, namely "write enable"
 //  typedef i8 strobe_t;

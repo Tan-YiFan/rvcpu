@@ -11,7 +11,7 @@ module ICache
     input  cbus_resp_t cresp
 );
 	localparam ALIGN_BITS = 3;
-	localparam OFFSET_BITS = 7; // 2KB per line
+	localparam OFFSET_BITS = COMMON_OFFSET_BITS; // 2KB per line
 	localparam CBUS_WIDTH = 3;
 	localparam WORDS_PER_LINE = 2 ** (OFFSET_BITS - CBUS_WIDTH);
 	localparam INDEX_BITS = 16 - OFFSET_BITS;
@@ -87,7 +87,7 @@ module ICache
 	assign creq.addr = {ireq.addr[63:OFFSET_BITS], {OFFSET_BITS{1'b0}}};
 	assign creq.strobe = '0;
 	assign creq.data = '0;
-	assign creq.len = MLEN16;
+	assign creq.len = AXI_BURST_LEN;
 	assign creq.burst = AXI_BURST_INCR;
 
 	RAM_SinglePort #(

@@ -13,7 +13,7 @@ module DCache
     input  cbus_resp_t cresp
 );
 	localparam ALIGN_BITS = 3;
-	localparam OFFSET_BITS = 7; // 2KB per line
+	localparam OFFSET_BITS = COMMON_OFFSET_BITS; // 2KB per line
 	localparam CBUS_WIDTH = 3;
 	localparam WORDS_PER_LINE = 2 ** (OFFSET_BITS - CBUS_WIDTH);
 
@@ -132,7 +132,7 @@ module DCache
 	// assign creq.addr = dreq.addr;
 	assign creq.strobe = state == UNCACHED ? dreq.strobe : '1;
 	assign creq.data = state == UNCACHED ? dreq.data : selected_data;
-	assign creq.len = state == UNCACHED ? MLEN1 : MLEN16;
+	assign creq.len = state == UNCACHED ? MLEN1 : AXI_BURST_LEN;
 	assign creq.burst = state == UNCACHED ? AXI_BURST_FIXED : AXI_BURST_INCR;
 
 	RAM_SinglePort #(
