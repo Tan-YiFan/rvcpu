@@ -16,6 +16,7 @@ module ICache
 	localparam WORDS_PER_LINE = 2 ** (OFFSET_BITS - CBUS_WIDTH);
 	localparam INDEX_BITS = ICACHE_BITS - OFFSET_BITS;
 	localparam NUM_LINES = 2 ** INDEX_BITS;
+	localparam TAG_WIDTH = 28 - OFFSET_BITS - INDEX_BITS;
 
 	localparam type state_t = enum u1 {
 		INIT = '0,
@@ -26,9 +27,11 @@ module ICache
 	u64 counter, counter_nxt;
 
 	wire [INDEX_BITS-1:0] selected_idx = ireq.addr[OFFSET_BITS + INDEX_BITS -1 -: INDEX_BITS];
+	wire [TAG_WIDTH-1:0] tag = ireq.addr[27-:TAG_WIDTH];
+	logic [TAG_WIDTH-1:0] tag_read;
 
 	u1 hit, valid_read;
-	assign hit = valid_read;
+	assign hit = valid_read && tag_read == tag;
 
 	wire [OFFSET_BITS + INDEX_BITS - ALIGN_BITS - 1:0] ram_addr = state == INIT ?
 	ireq.addr[OFFSET_BITS + INDEX_BITS - 1:ALIGN_BITS] :
@@ -92,16 +95,16 @@ module ICache
 
 	RAM_SinglePort #(
 		.ADDR_WIDTH(INDEX_BITS),
-		.DATA_WIDTH(1),
-		.BYTE_WIDTH(1),
+		.DATA_WIDTH(TAG_WIDTH + 1),
+		.BYTE_WIDTH(TAG_WIDTH + 1),
 		.MEM_TYPE(0),
 		.READ_LATENCY(0)
 	) valid_ram (
 		.clk, .en(1'b1),
 		.addr(selected_idx),
 		.strobe(valid_wen),
-		.wdata(1'b1),
-		.rdata(valid_read)
+		.wdata({1'b1, tag}),
+		.rdata({valid_read, tag_read})
 	);
 	RAM_SinglePort #(
 		.ADDR_WIDTH(OFFSET_BITS + INDEX_BITS - ALIGN_BITS),
