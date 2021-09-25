@@ -9,7 +9,7 @@ package config_pkg;
 	parameter USE_ICACHE = USE_CACHE;
 	parameter USE_DCACHE = USE_CACHE;
 	parameter ADD_LATENCY = 1'b0;
-	parameter AXI_BURST_NUM = 32;
+	parameter AXI_BURST_NUM = 64;
 endpackage
 
 `endif
