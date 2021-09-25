@@ -97,9 +97,7 @@ module RAM_SimpleDualPort #(
 		.dina(wdata),
 		.doutb(rdata),
 
-		.regcea(1),
 		.regceb(1),
-		.rsta(0),
 		.rstb(0),
 		.sleep(0),
 		.injectdbiterra(0),
