@@ -59,7 +59,7 @@ module multicycle (
 		endcase
 	end
 
-	localparam MULT_DELAY = 3;
+	localparam MULT_DELAY = 2;
 	localparam DIV_DELAY = 66;
 	
 	u7 counter, counter_nxt;
