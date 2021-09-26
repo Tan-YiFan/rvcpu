@@ -11,7 +11,7 @@ package config_pkg;
 	parameter ADD_LATENCY = 1'b1;
 	parameter AXI_BURST_NUM = 128;
 	parameter ICACHE_BITS = 16;
-	parameter DCACHE_BITS = 21;
+	parameter DCACHE_BITS = 20;
 endpackage
 
 `endif
