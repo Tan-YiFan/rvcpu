@@ -15,14 +15,20 @@ module fetch
 	freg_intf.fetch freg,
 	dreg_intf.fetch dreg,
 	output u64 pc,
-	input u32 raw_instr
+	input ibus_resp_t iresp
 );
 	fetch_data_t dataF;
 	assign pc = freg.pc;
 
-	assign dataF.pc = pc;
-	assign dataF.raw_instr = raw_instr;
+	for (genvar i = 0; i < FETCH_WIDTH; i++) begin
+		assign dataF.instr[i].valid = iresp.data[i].valid;
+		assign dataF.instr[i].raw_instr = iresp.data[i].raw_instr;
+		assign dataF.instr[i].pc = ;
+		assign dataF.instr[i].jump = ;
+	end
+	
 	assign pcselect.pcplus4F = pc + 64'd4;
+
 	assign dreg.dataF_nxt = dataF;
 endmodule
 

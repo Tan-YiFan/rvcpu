@@ -35,10 +35,15 @@ package common;
 	typedef logic[1:0]  u2;
 	typedef logic 	    u1;
 
+	parameter CREG_NUM = 32;
 	typedef u5 creg_addr_t;
+	typedef logic [$clog2(PREG_NUM) - 1:0] preg_addr_t;
+	typedef logic [$clog2(PREG_NUM):0] rob_ptr_t;
 	// typedef u64 word_t;
 	typedef u8 strobe_t;
 	typedef u12 csr_addr_t;
+	parameter PC_WIDTH = 32;
+	typedef logic[PC_WIDTH-1:0] pc_t;
 
 	
 	
@@ -221,14 +226,21 @@ package common;
  typedef struct packed {
      logic  addr_ok;  // is the address accepted by cache?
      logic  data_ok;  // is the field "data" valid?
-     u32 data;        // the data read from cache
+     struct packed {
+		u1 valid;
+		u32 raw_instr;
+		u1 branch;
+		u1 call;
+		u1 ret;
+		pc_t pc_nxt;
+	 } [FETCH_WIDTH-1:0] data;        // the data read from cache
  } ibus_resp_t;
  
- `define IREQ_TO_DREQ(ireq) \
-     {ireq, MSIZE4, 8'b0, 64'b0}
+//  `define IREQ_TO_DREQ(ireq) \
+//      {ireq, MSIZE4, 8'b0, 64'b0}
 
- `define DRESP_TO_IRESP(dresp, ireq) \
-     {dresp.addr_ok, dresp.data_ok, ireq.addr[2] ? dresp.data[63:32] : dresp.data[31:0]}
+//  `define DRESP_TO_IRESP(dresp, ireq) \
+//      {dresp.addr_ok, dresp.data_ok, ireq.addr[2] ? dresp.data[63:32] : dresp.data[31:0]}
  
  /**
   * cache bus: simplified burst AXI transaction interface

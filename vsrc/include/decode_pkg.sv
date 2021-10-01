@@ -6,6 +6,7 @@
 `endif
 package decode_pkg;
 	import common::*;
+	import config_pkg::*;
 
 	/*
 	 * R-type:
@@ -209,17 +210,17 @@ package decode_pkg;
 	typedef struct packed {
 		decoded_op_t op;
 		control_t ctl;
-		creg_addr_t rs1, rs2;
+		creg_addr_t src1, src2, dst;
 		csr_addr_t csr_addr;
 		word_t imm;
 	} decoded_instr_t;
 	
 	typedef struct packed {
-		decoded_instr_t instr;
-		u64 pc;
-		u64 rd1, rd2;
-		u64 csr;
-		creg_addr_t writereg;
+		struct packed {
+			u1 valid;
+			decoded_instr_t instr;
+			u64 pc;
+		} [FETCH_WIDTH-1:0] instr;
 	} decode_data_t;
 	
 	

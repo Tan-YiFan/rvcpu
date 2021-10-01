@@ -9,6 +9,7 @@
 `include "include/writeback_pkg.sv"
 `include "include/forward_pkg.sv"
 `include "include/csr_pkg.sv"
+`include "include/raname_pkg.sv"
 `endif
 
 import common::*;
@@ -19,6 +20,7 @@ import memory_pkg::*;
 import writeback_pkg::*;
 import forward_pkg::*;
 import csr_pkg::*;
+import rename_pkg::*;
 
 interface pcselect_intf();
 	u1 branch_taken;
@@ -162,6 +164,56 @@ interface regfile_intf();
 	modport regfile(input ra1, ra2, valid, wa, wd,
 			output rd1, rd2);
 	modport writeback(output valid, wa, wd);
+endinterface
+
+interface bp_intf(
+	/* From iresp */
+	
+);
+
+endinterface
+
+interface rename_intf();
+	import common::*;
+    import decode_pkg::*;
+    preg_addr_t [FETCH_WIDTH-1:0]psrc;
+    struct packed {
+        logic valid;
+        creg_addr_t src1, src2, dst;
+        word_t pc;
+        control_t ctl;
+    } [FETCH_WIDTH-1:0]instr;
+    struct packed {
+        struct packed {
+            logic valid;
+            preg_addr_t id;
+        } psrc1, psrc2;
+    } [FETCH_WIDTH-1:0]info;
+    modport renaming(
+        input info, psrc,
+        output instr
+    );
+    modport rat(
+        input psrc, instr, 
+        output info
+    );
+    modport rob(
+        input instr,
+        output psrc
+    );
+endinterface
+
+interface retire_intf();
+	struct packed {
+        logic valid;
+        word_t data;
+        control_t ctl;
+        creg_addr_t dst;
+        preg_addr_t preg;
+    } [COMMIT_WIDTH-1:0]retire;
+	modport rat(
+        input retire
+    );
 endinterface
 
 `endif
