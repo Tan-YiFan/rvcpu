@@ -19,18 +19,16 @@ package rename_pkg;
 		creg_addr_t src;
 		preg_addr_t psrc;
 	} rat_wreq_t;
-	typedef union packed{
+	typedef union packed {
         struct packed {
             word_t data;
         } alu;
         struct packed {
-            vaddr_t addr;
+            word_t data;
         } mem;
         struct packed {
-        	logic [30:0] zeros;
-            logic branch_taken;
-            pc_t pc;
-			word_t data;
+			u1 pd_fail;
+        	word_t data;
         } branch;
         struct packed {
             word_t data;
@@ -42,16 +40,27 @@ package rename_pkg;
         preg_addr_t preg;
         creg_addr_t creg;
         entry_data_t data;
-	`ifdef VERILATOR
         pc_t pc;
-	`endif
         control_t ctl;
 	} rob_entry_t;
 
 	typedef struct packed {
+		preg_addr_t preg;
+        creg_addr_t creg;
+		pc_t pc;
+		control_t ctl;
+	} rob_entry1_t;
+
+	typedef struct packed {
+		entry_data_t data;
+	} rob_entry2_t;
+	
+	
+
+	typedef struct packed {
 		struct packed {
 			logic valid;
-			preg_addr_t pdst;
+			rob_ptr_t pdst;
 			struct packed {
 				logic valid;
 				preg_addr_t id;
@@ -61,6 +70,8 @@ package rename_pkg;
 			decoded_op_t op;
 			word_t imm;
 			pc_t pc;
+			u1 jump;
+			pc_t pcjump;
 		} [FETCH_WIDTH-1:0] instr;
 	} rename_data_t;
 	

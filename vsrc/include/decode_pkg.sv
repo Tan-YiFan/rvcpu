@@ -184,6 +184,9 @@ package decode_pkg;
 	typedef enum u2 {
 		CSR_CSRRC, CSR_CSRRS, CSR_CSRRW
 	} csr_write_t;
+	typedef enum u2 {
+		ENTRY_ALU, ENTRY_MEM, ENTRY_BR, ENTRY_MUL
+	} entry_type_t;
 	
 	
 	typedef struct packed {
@@ -205,6 +208,7 @@ package decode_pkg;
 		csr_write_t csr_write_type;
 		u1 is_multdiv;
 		u1 is_mret;
+		entry_type_t entry_type;
 	} control_t;
 	
 	typedef struct packed {
@@ -219,7 +223,9 @@ package decode_pkg;
 		struct packed {
 			u1 valid;
 			decoded_instr_t instr;
-			u64 pc;
+			pc_t pc;
+			u1 jump;
+			pc_t pcjump;
 		} [FETCH_WIDTH-1:0] instr;
 	} decode_data_t;
 	

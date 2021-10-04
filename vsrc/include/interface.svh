@@ -61,6 +61,15 @@ interface dreg_intf();
 	modport decode(input dataF);
 endinterface
 
+interface rreg_intf();
+	import decode_pkg::*;
+	decode_data_t dataD, dataD_nxt;
+
+	modport decode(output dataD_nxt);
+	modport rreg(input dataD_nxt, output dataD);
+	modport rename(input dataD);
+endinterface
+
 interface ereg_intf();
 	import decode_pkg::*;
 	decode_data_t dataD, dataD_nxt;
@@ -176,7 +185,7 @@ endinterface
 interface rename_intf();
 	import common::*;
     import decode_pkg::*;
-    preg_addr_t [FETCH_WIDTH-1:0]psrc;
+    rob_ptr_t [FETCH_WIDTH-1:0]psrc;
     struct packed {
         logic valid;
         creg_addr_t src1, src2, dst;
@@ -214,6 +223,18 @@ interface retire_intf();
 	modport rat(
         input retire
     );
+endinterface
+
+
+interface source_intf();
+	import common::*;
+	word_t [AREG_READ_PORTS-1:0] arf1, arf2, prf1, prf2;
+	creg_addr_t [AREG_READ_PORTS-1:0] src1, src2;
+	preg_addr_t [AREG_READ_PORTS-1:0] psrc1, psrc2;
+	modport source(output src1, src2, psrc1, psrc2,
+					input arf1, arf2, prf1, prf2);
+	modport regfile(input src1, src2, output arf1, arf2);
+	modport rob(input psrc1, psrc2, output prf1, prf2);
 endinterface
 
 `endif

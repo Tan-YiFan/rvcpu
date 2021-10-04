@@ -3,8 +3,8 @@
 
 package config_pkg;
 	// parameters
-	parameter AREG_READ_PORTS = 4;
-	parameter AREG_WRITE_PORTS = 6;
+	parameter AREG_READ_PORTS = 8;
+	parameter AREG_WRITE_PORTS = 4;
 	parameter USE_CACHE = 1'b1;
 	parameter USE_ICACHE = USE_CACHE;
 	parameter USE_DCACHE = USE_CACHE;

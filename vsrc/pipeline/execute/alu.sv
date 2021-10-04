@@ -4,7 +4,7 @@
 `ifdef VERILATOR
 `include "include/interface.svh"
 `else
-`include "interface.svh"
+
 `endif
 
 module alu

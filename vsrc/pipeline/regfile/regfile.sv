@@ -1,58 +1,58 @@
 `ifndef __REGFILE_SV
 `define __REGFILE_SV
-`ifdef VERILATOR
-`include "include/interface.svh"
-`else
-`include "interface.svh"
-`endif
-module regfile 
-	import common::*;
-	#(
-	parameter READ_PORTS = AREG_READ_PORTS,
-	parameter WRITE_PORTS = AREG_WRITE_PORTS
-) (
-	input logic clk, reset,
-	regfile_intf.regfile self
-);
-	u64 regs[31:0];
+//`ifdef VERILATOR
+//`include "include/interface.svh"
+//`else
+//`include "interface.svh"
+//`endif
+//module regfile 
+//	import common::*;
+//	#(
+//	parameter READ_PORTS = AREG_READ_PORTS,
+//	parameter WRITE_PORTS = AREG_WRITE_PORTS
+//) (
+//	input logic clk, reset,
+//	regfile_intf.regfile self
+//);
+//	u64 regs[31:0];
 
-	for (genvar i = 0; i < READ_PORTS; i++) begin
-		assign self.rd1[i] = regs[self.ra1[i]];
-		assign self.rd2[i] = regs[self.ra2[i]];
-	end
+//	for (genvar i = 0; i < READ_PORTS; i++) begin
+//		assign self.rd1[i] = regs[self.ra1[i]];
+//		assign self.rd2[i] = regs[self.ra2[i]];
+//	end
 
-	initial begin
-		for (int i = 0; i < 32; i++) begin
-			regs[i] = 0;
-		end
-	end
-	always_ff @(posedge clk) begin
-		for (int j = 0; j < WRITE_PORTS; j++) begin
-			if (self.valid[j]) begin
-				regs[self.wa[j]] = self.wd[j];
-			end
-		end
-	end
+//	initial begin
+//		for (int i = 0; i < 32; i++) begin
+//			regs[i] = 0;
+//		end
+//	end
+//	always_ff @(posedge clk) begin
+//		for (int j = 0; j < WRITE_PORTS; j++) begin
+//			if (self.valid[j]) begin
+//				regs[self.wa[j]] = self.wd[j];
+//			end
+//		end
+//	end
 	
-	// for (genvar i = 1; i < 32; i++) begin
-	// 	always_comb begin
-	// 		regs_nxt[i] = regs[i];
-	// 		for (int j = 0; j < WRITE_PORTS; j++) begin
-	// 			if (i == self.wa[j] && self.valid[j]) begin
-	// 				regs_nxt[i] = self.wd[j];
-	// 			end
-	// 		end
-	// 	end
-	// end
+//	// for (genvar i = 1; i < 32; i++) begin
+//	// 	always_comb begin
+//	// 		regs_nxt[i] = regs[i];
+//	// 		for (int j = 0; j < WRITE_PORTS; j++) begin
+//	// 			if (i == self.wa[j] && self.valid[j]) begin
+//	// 				regs_nxt[i] = self.wd[j];
+//	// 			end
+//	// 		end
+//	// 	end
+//	// end
 		
 	
 
-endmodule
+//endmodule
 
 module preg 
 	import common::*;
 	#(
-	parameter READ_PORTS = 4,
+	parameter READ_PORTS = 7,
 	parameter WRITE_PORTS = 1
 ) (
 	input logic clk, reset,

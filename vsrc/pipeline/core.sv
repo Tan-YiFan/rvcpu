@@ -35,6 +35,9 @@ module core
 	u64 pc;
 	freg_intf freg_intf();
 	dreg_intf dreg_intf();
+	rreg_intf rreg_intf();
+	ireg_intf ireg_intf();
+	sreg_intf sreg_intf();
 	ereg_intf ereg_intf();
 	mreg_intf mreg_intf();
 	wreg_intf wreg_intf();
@@ -98,13 +101,14 @@ module core
 
 	decode decode(
 		.clk, .reset,
-		.pcselect(pcselect_intf.decode),
 		.dreg(dreg_intf.decode),
-		.ereg(ereg_intf.decode),
-		.forward(forward_intf.decode),
-		.hazard(hazard_intf.decode),
-		.regfile(regfile_intf.decode),
-		.csr(csr_intf.decode)
+		.rreg(rreg_intf.decode)
+	);
+
+	rename rename (
+		.rreg(rreg_intf.rename),
+		.ireg(ireg_intf.rename),
+		.self(rename_intf.rename)
 	);
 
 	execute execute(
@@ -152,7 +156,7 @@ module core
 		.pcselect(pcselect_intf.csr)
 	);
 
-	pipereg #(.T(u64), .INIT(PCINIT)) freg(
+	pipereg #(.T(pc_t), .INIT(PCINIT)) freg(
 		.clk, .reset,
 		.in(freg_intf.pc_nxt),
 		.out(freg_intf.pc),
@@ -166,6 +170,14 @@ module core
 		.out(dreg_intf.dataF),
 		.flush(hazard_intf.flushD),
 		.en(~hazard_intf.stallD)
+	);
+
+	pipereg #(.T(decode_data_t)) rreg (
+		.clk, .reset,
+		.in(rreg_intf.dataD_nxt),
+		.out(rreg_intf.dataD),
+		.flush(hazard_intf.flushR),
+		.en(~hazard_intf.stallR)
 	);
 
 	pipereg #(.T(decode_data_t)) ereg (

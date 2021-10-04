@@ -18,13 +18,13 @@ module rename
 	decode_data_t dataD;
 	rename_data_t dataR;
 	creg_addr_t [FETCH_WIDTH-1:0] src1, src2, dst;
-    for (genvar i=0; i<FETCH_WIDTH; i++) begin
+    for (genvar i = 0; i < FETCH_WIDTH; i++) begin
         assign src1[i] = dataD.instr[i].instr.src1;
     end
-    for (genvar i=0; i<FETCH_WIDTH; i++) begin
+    for (genvar i = 0; i < FETCH_WIDTH; i++) begin
         assign src2[i] = dataD.instr[i].instr.src2;
     end
-    for (genvar i=0; i<FETCH_WIDTH; i++) begin
+    for (genvar i = 0; i < FETCH_WIDTH; i++) begin
         assign dst[i] = dataD.instr[i].instr.dst;
     end
 	struct packed {
@@ -47,7 +47,7 @@ module rename
 
 	for (genvar i = 0; i < FETCH_WIDTH ; i++) begin
 		assign dataR.instr[i].valid = dataD.instr[i].valid;
-		assign dataR.instr[i].dst = self.psrc[i];
+		assign dataR.instr[i].pdst = self.psrc[i];
 		assign dataR.instr[i].psrc1 = psrc1[i];
 		assign dataR.instr[i].psrc2 = psrc2[i];
 		assign dataR.instr[i].dst = dataD.instr[i].instr.dst;
@@ -57,7 +57,8 @@ module rename
 		assign dataR.instr[i].op = dataD.instr[i].instr.op;
 		assign dataR.instr[i].imm = dataD.instr[i].instr.imm;
 		assign dataR.instr[i].pc = dataD.instr[i].pc;
-		assign dataR.instr[i].exception = dataD.instr[i].exception;
+		assign dataR.instr[i].jump = dataD.instr[i].jump;
+		assign dataR.instr[i].pcjump = dataD.instr[i].pcjump;
 	end
 	
 	for (genvar i = 0; i < FETCH_WIDTH ; i++) begin

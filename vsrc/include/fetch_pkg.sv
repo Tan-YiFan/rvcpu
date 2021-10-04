@@ -11,9 +11,9 @@ package fetch_pkg;
 		struct packed {
 			u1 valid;
 			u32 raw_instr;
-			u64 pc;
+			pc_t pc;
 			u1 jump;
-			
+			pc_t pcjump;
 		} [FETCH_WIDTH-1:0] instr;
 	} fetch_data_t;
 endpackage

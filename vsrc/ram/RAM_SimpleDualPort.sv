@@ -2,7 +2,7 @@
 `define __RAM_SIMPLEDUALPORT_SV
 
 module RAM_SimpleDualPort #(
-	parameter int ADDR_WIDTH = 13,
+	parameter int ADDR_WIDTH = 10,
 	parameter int DATA_WIDTH = 64,
 	parameter int BYTE_WIDTH = 64,
 	parameter MEM_TYPE = 0,

@@ -2,11 +2,11 @@
 `define __RAM_SINGLEPORT_SV
 
 module RAM_SinglePort #(
-	parameter int ADDR_WIDTH = 13,
+	parameter int ADDR_WIDTH = 10,
 	parameter int DATA_WIDTH = 64,
-	parameter int BYTE_WIDTH = 8,
+	parameter int BYTE_WIDTH = 64,
 	parameter MEM_TYPE = 0,
-	parameter READ_LATENCY = 1,
+	parameter READ_LATENCY = 0,
 	
 	localparam WORD_WIDTH = DATA_WIDTH,
 	localparam NUM_WORDS = 2 ** ADDR_WIDTH,
