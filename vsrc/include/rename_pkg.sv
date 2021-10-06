@@ -24,16 +24,20 @@ package rename_pkg;
 	} rat_wreq_t;
 	typedef union packed {
         struct packed {
+			word_t extra;
             word_t data;
         } alu;
         struct packed {
+			word_t extra;
             word_t data;
         } mem;
         struct packed {
-			u1 pd_fail;
+			word_t extra;
+			// u1 pd_fail;
         	word_t data;
         } branch;
         struct packed {
+			word_t extra;
             word_t data;
         } mult;
     } entry_data_t;

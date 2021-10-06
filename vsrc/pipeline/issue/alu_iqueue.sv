@@ -56,7 +56,7 @@ module alu_iqueue
 			end
 		end
 	end
-	assign full = free != wnum;
+	assign full = free < wnum;
 
 	typedef struct packed {
 		u1 valid;
@@ -65,11 +65,9 @@ module alu_iqueue
 	} sel_meta_t;
 	sel_meta_t [QLEN-1:0]sel[$clog2(QLEN):0]/* verilator split_var */;
 	for (genvar i = 0; i < QLEN; i++) begin
-		assign sel[0][i] = {
-			iq_valid(i),
-			iq_addr_t'(i),
-			dst[i]
-		};
+		assign sel[0][i].valid = iq_valid(i);
+		assign sel[0][i].id = i;
+		assign sel[0][i].dst = dst[i];
 	end
 	function u1 is_older(sel_meta_t i, j);
 		// return ~i.valid ? 1'b0 : (~j.valid ? 1'b1 : (
@@ -234,6 +232,9 @@ module alu_iqueue
 			// end
 			v_nxt[chosen] = 1'b0;
 		end
+	end
+	always_ff @(posedge clk) begin
+		// $display("%x", v[0]);
 	end
 	
 endmodule

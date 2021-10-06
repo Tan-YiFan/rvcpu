@@ -198,7 +198,7 @@ interface rename_intf();
         struct packed {
             logic valid;
             preg_addr_t id;
-		} psrc1, psrc2, pdst;
+		} psrc1, psrc2;
     } [FETCH_WIDTH-1:0]info;
     modport rename(
         input info, psrc,
@@ -267,6 +267,7 @@ interface ready_intf();
 	u1 [FETCH_WIDTH-1:0] v1, v2;
 	preg_addr_t [FETCH_WIDTH-1:0] psrc1, psrc2;
 	modport issue(input v1, v2, output psrc1, psrc2);
+	modport rob(output v1, v2, input psrc1, psrc2);
 endinterface
 
 `endif

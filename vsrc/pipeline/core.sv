@@ -198,7 +198,8 @@ module core
 		.commit(commit_intf.rob),
 		.retire(retire_intf.rob),
 		.hazard(hazard_intf.rob),
-		.pcselect(pcselect_intf.rob)
+		.pcselect(pcselect_intf.rob),
+		.ready(ready_intf.rob)
 	);
 
 	rat rat (

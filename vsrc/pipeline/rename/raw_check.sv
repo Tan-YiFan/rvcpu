@@ -18,7 +18,7 @@ module raw_check
 );
     assign psrc1[0] = psrc1_rat[0];
     assign psrc2[0] = psrc2_rat[0];
-	for (genvar i = 0; i < FETCH_WIDTH; i++) begin
+	for (genvar i = 1; i < FETCH_WIDTH; i++) begin
 		always_comb begin
 			psrc1[i] = psrc1_rat[i];
             for (int j = i - 1; j >= 0; j--) begin

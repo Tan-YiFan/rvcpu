@@ -35,7 +35,8 @@ module rename
     for (genvar i = 0; i < FETCH_WIDTH ; i++) begin
         assign psrc1_rat[i] =  self.info[i].psrc1;
         assign psrc2_rat[i] =  self.info[i].psrc2;
-        assign pdst_fl[i] = self.info[i].pdst;
+		assign pdst_fl[i].valid = dst[i] != '0;
+        assign pdst_fl[i].id = self.psrc[i];
     end
     raw_check raw_check(.psrc1_rat,
                         .psrc2_rat,
@@ -72,6 +73,12 @@ module rename
 	end
 	assign dataD = rreg.dataD;
     assign ireg.dataR_nxt = dataR;
+	// always_comb begin
+	// 	if (dataR.instr[2].valid) begin
+	// 		$display("", dataR.instr[2].psrc1.id);
+	// 	end
+	// end
+	
 endmodule
 
 

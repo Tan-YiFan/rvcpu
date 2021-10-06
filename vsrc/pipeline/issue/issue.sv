@@ -136,15 +136,32 @@ module issue
 		assign dataI.alu_issue[i].pc = r_alu[i].entry.pc;
 
 	end
+
+	for (genvar i = 0; i < FETCH_WIDTH; i++) begin
+		assign ready.psrc1[i] = dataR.instr[i].psrc1.id;
+		assign ready.psrc2[i] = dataR.instr[i].psrc2.id;
+	end
+	
 	
 	always_ff @(posedge clk) begin
-		// if (dataI.alu_issue[0].valid) begin
-			// $display("%x", dataI.alu_issue[0].dst);
+		// if (dataI.alu_issue[2].valid) begin
+		// 	$display("%x", dataI.alu_issue[2].pc);
 		// end
-		// if (dataR.instr[0].valid) begin
-		// 	$display("%x", dataR.instr[0].dst);
+		// if (dataR.instr[2].valid) begin
+		// 	$display("%x", dataR.instr[2].pc);
 		// end
 	end
+
+	for (genvar i = 0; i < 4; i++) begin
+		always_ff @(posedge clk) begin
+			if (dataI.alu_issue[i].dst == 2 && dataI.alu_issue[i].valid) begin
+				$display("%x", dataI.alu_issue[i].pc);
+			end
+		end
+		
+		
+	end
+	
 	
 	assign sreg.dataI_nxt = dataI;
 	assign dataR = ireg.dataR;

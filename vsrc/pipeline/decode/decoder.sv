@@ -59,6 +59,7 @@ module decoder
 		unique case(raw_op)
 			OP_R: begin
 				if (f7 == F7_MUL) begin
+					ctl.entry_type = ENTRY_MUL;
 					unique case(f3)
 						F3_MUL: begin
 							ctl.regwrite = 1'b1;
@@ -291,6 +292,7 @@ module decoder
 			end
 			OP_RW: begin
 				if (f7 == F7_MUL) begin
+					ctl.entry_type = ENTRY_MUL;
 					unique case(f3)
 						F3_MUL: begin
 							ctl.regwrite = 1'b1;
@@ -384,6 +386,7 @@ module decoder
 				ctl.imm_as_src2 = 1'b1;
 			end
 			OP_JAL: begin
+				ctl.entry_type = ENTRY_BR;
 				op = JAL;
 				ctl.imm_type = IMM_J;
 				ctl.regwrite = 1'b1;
@@ -391,6 +394,7 @@ module decoder
 				ctl.link = 1'b1;
 			end
 			OP_JALR: begin
+				ctl.entry_type = ENTRY_BR;
 				op = JALR;
 				ctl.regwrite = 1'b1;
 				ctl.jump = 1'b1;
@@ -401,6 +405,7 @@ module decoder
 				end
 			end
 			OP_B: begin
+				ctl.entry_type = ENTRY_BR;
 				unique case(f3)
 					F3_BEQ: begin
 						op = BEQ;
@@ -446,6 +451,7 @@ module decoder
 				ctl.imm_as_src2 = 1'b1;
 			end
 			OP_L: begin
+				ctl.entry_type = ENTRY_MEM;
 				unique case(f3)
 					F3_LB: begin
 						op = LB;
@@ -519,6 +525,7 @@ module decoder
 				endcase
 			end
 			OP_S: begin
+				ctl.entry_type = ENTRY_MEM;
 				unique case(f3)
 					F3_SB: begin
 						op = SB;
@@ -571,6 +578,7 @@ module decoder
 				endcase
 			end
 			OP_PRIV: begin
+				ctl.entry_type = ENTRY_BR;
 				unique case(f3)
 					F3_ECALL_EBREAK: begin
 						if (raw_instr == 32'b0011000_00010_00000_000_00000_1110011)
@@ -654,9 +662,29 @@ module decoder
 
 	assign instr.op = op;
 	assign instr.ctl = ctl;
-	assign instr.src1 = rs1;
-	assign instr.src2 = rs2;
-	assign instr.dst = rd;
+	always_comb begin
+		instr.src1 = rs1;
+		if (ctl.pc_as_src1) begin
+			instr.src1 = '0;
+		end
+	end
+
+	always_comb begin
+		instr.src2 = rs2;
+		if (ctl.imm_as_src2 && ~ctl.memwrite) begin
+			instr.src2 = '0;
+		end
+	end
+	
+	always_comb begin
+		instr.dst = rd;
+		if (~ctl.regwrite) begin
+			instr.dst = '0;
+		end
+	end
+	// assign instr.src1 = rs1;
+	// assign instr.src2 = rs2;
+	// assign instr.dst = rd;
 	assign instr.csr_addr = raw_instr[31:20];
 	assign instr.imm = imm;
 endmodule

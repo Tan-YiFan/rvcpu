@@ -15,7 +15,8 @@ module rob
     commit_intf.rob commit,
 	retire_intf.rob retire,
     hazard_intf.rob hazard,
-    pcselect_intf.rob pcselect
+    pcselect_intf.rob pcselect,
+	ready_intf.rob ready
 );
 	// h: read in commit; t: write in rename
 	rob_ptr_t h[COMMIT_WIDTH-1:0], t[FETCH_WIDTH-1:0], h_nxt, t_nxt;
@@ -135,9 +136,24 @@ module rob
 	for (genvar i = 1; i < COMMIT_WIDTH; i++) begin
 		assign v_retire[i] = v_retire[i - 1] && c[preg_addr_t'(h[i])] && h[i] != t[0];
 	end
+	always_comb begin
+		for (int i = 0; i < COMMIT_WIDTH; i++) begin
+			for (int j = 0; j < R1_NUM; j++) begin
+				ra1[i][j] = 'x;
+			end
+		end
+		for (int i = 0; i < COMMIT_WIDTH; i++) begin
+			for (int j = 0; j < R2_NUM; j++) begin
+				ra2[i][j] = 'x;
+			end
+		end
+		for (int i = 0; i < COMMIT_WIDTH; i++) begin
+			ra1[bank(h[i])][i] = bank_offset(h[i]);
+			ra2[bank(h[i])][i] = bank_offset(h[i]);
+		end
+	end
+	
 	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
-		assign ra1[bank(h[i])][i] = bank_offset(h[i]);
-		assign ra2[bank(h[i])][i] = bank_offset(h[i]);
 		assign retire.retire[i].valid = v_retire[i];
 		assign retire.retire[i].data = r2[bank(h[i])][i].data;
 		assign retire.retire[i].ctl = r1[bank(h[i])][i].ctl;
@@ -203,6 +219,10 @@ module rob
 		// end
 	end
 	
+	for (genvar i = 0; i < FETCH_WIDTH; i++) begin
+		assign ready.v1[i] = c[ready.psrc1[i]];
+		assign ready.v2[i] = c[ready.psrc2[i]];
+	end
 	
 endmodule
 `endif

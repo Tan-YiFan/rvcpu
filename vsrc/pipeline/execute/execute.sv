@@ -27,7 +27,7 @@ module execute
 		always_comb begin
 			alusrca[i] = dataS.alu_source[i].d1;
 			if (dataS.alu_source[i].ctl.pc_as_src1) begin
-				alusrca[i] = dataS.alu_source[i].pc;
+				alusrca[i] = {32'd0, dataS.alu_source[i].pc};
 			end
 		end
 		always_comb begin
@@ -66,6 +66,15 @@ module execute
 		// 	$display("%x", dataS.alu_source[1].ctl.pc_as_src1);
 		// end
 	end
+	for (genvar i = 0; i < 4; i++) begin
+		always_ff @(posedge clk) begin
+			if (dataE.alu_commit[i].valid) begin
+				// $display("%x %x %x %x", i, dataS.alu_source[i].pc, alusrca[i], alusrcb[i]);
+			end
+		end
+		
+	end
+	
 	
 
 	assign dataS = ereg.dataS;

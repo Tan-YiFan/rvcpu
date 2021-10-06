@@ -44,7 +44,7 @@ module regfile
 		always_comb begin
 			regs_nxt[i] = regs[i];
 			for (int j = 0; j < WRITE_PORTS; j++) begin
-				if (i == retire.retire[j].dst && retire.retire[j].ctl.regwrite) begin
+				if (retire.retire[j].valid && i == retire.retire[j].dst && retire.retire[j].ctl.regwrite) begin
 					regs_nxt[i] = retire.retire[j].data;
 				end
 			end
