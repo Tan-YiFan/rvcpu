@@ -126,7 +126,7 @@ bit_gen:
   image: gitlab.agileserve.org.cn:15050/zelin/vivado-ci-tools/vivado-vnc-ci-multistage:v2.7
   script:
     - export PATH=${PATH}:/opt/Xilinx_2019.1/Vivado/2019.1/bin
-    - make -C fpga PRJ=project BOARD=nf_card DUT_FREQ=100 GEN_BITSTREAM=true
+    - make -C fpga PRJ=project BOARD=nf_card GEN_BITSTREAM=true
   needs:
     - create_verilog
   artifacts:

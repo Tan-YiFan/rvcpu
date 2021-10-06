@@ -44,7 +44,7 @@ module riscv_cpu_top (
   input         io_master_ruser,
   input         io_interrupt
 );
-  riscv_cpu riscv_cpu (
+  /* riscv_cpu riscv_cpu (
     .clock(clock),
     .reset(reset),
     .io_mem_aw_ready(io_master_awready),
@@ -89,5 +89,50 @@ module riscv_cpu_top (
     .io_mem_r_bits_id(io_master_rid),
     .io_mem_r_bits_user(io_master_ruser),
     .io_meip(io_interrupt)
+  ); */
+
+    mycpu_top mycpu_top (
+    .aclk(clock),
+    .areset(reset),
+    .awready(io_master_awready),
+    .awvalid(io_master_awvalid),
+    .awaddr(io_master_awaddr),
+    .awprot(io_master_awprot),
+    .awid(io_master_awid),
+    .awlen(io_master_awlen),
+    .awsize(io_master_awsize),
+    .awburst(io_master_awburst),
+    .awlock(io_master_awlock),
+    .awcache(io_master_awcache),
+    .wready(io_master_wready),
+    .wvalid(io_master_wvalid),
+    .wdata(io_master_wdata),
+    .wstrb(io_master_wstrb),
+    .wlast(io_master_wlast),
+    .bready(io_master_bready),
+    .bvalid(io_master_bvalid),
+    .bresp(io_master_bresp),
+    .bid(io_master_bid),
+    .arready(io_master_arready),
+    .arvalid(io_master_arvalid),
+    .araddr(io_master_araddr),
+    .arprot(io_master_arprot),
+    .arid(io_master_arid),
+    .arlen(io_master_arlen),
+    .arsize(io_master_arsize),
+    .arburst(io_master_arburst),
+    .arlock(io_master_arlock),
+    .arcache(io_master_arcache),
+    .rready(io_master_rready),
+    .rvalid(io_master_rvalid),
+    .rresp(io_master_rresp),
+    .rdata(io_master_rdata),
+    .rlast(io_master_rlast),
+    .rid(io_master_rid)
   );
+
+  assign io_master_awuser = 0;
+  assign io_master_aruser = 0;
+  assign io_master_arqos = 0;
+  assign io_master_awqos = 0;
 endmodule
