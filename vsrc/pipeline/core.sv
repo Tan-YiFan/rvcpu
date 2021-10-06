@@ -199,7 +199,9 @@ module core
 		.retire(retire_intf.rob),
 		.hazard(hazard_intf.rob),
 		.pcselect(pcselect_intf.rob),
-		.ready(ready_intf.rob)
+		.ready(ready_intf.rob),
+		.wake(wake_intf.rob),
+		.source(source_intf.rob)
 	);
 
 	rat rat (

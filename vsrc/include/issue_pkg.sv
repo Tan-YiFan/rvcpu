@@ -9,10 +9,11 @@
 package issue_pkg;
 	import common::*;
 	import decode_pkg::*;
+	import config_pkg::*;
 	// parameter BRAODCAST_NUM = 10;
 	// parameter WAKE_NUM = BRAODCAST_NUM + 4;
-	parameter WAKE_NUM = 8 + 4;
-	parameter ALU_WAKE_NUM = 4 + 4 + 4 + 8 + 4;
+	parameter WAKE_NUM = COMMIT_WIDTH;
+	parameter ALU_WAKE_NUM = COMMIT_WIDTH;
 
 
 	typedef struct packed {

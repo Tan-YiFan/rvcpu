@@ -9,14 +9,17 @@
 
 module rob
 	import common::*;
-	import rename_pkg::*;(
+	import rename_pkg::*;
+	import issue_pkg::*;(
 	input logic clk, reset,
 	rename_intf.rob rename,
     commit_intf.rob commit,
 	retire_intf.rob retire,
     hazard_intf.rob hazard,
     pcselect_intf.rob pcselect,
-	ready_intf.rob ready
+	ready_intf.rob ready,
+	wake_intf.rob wake,
+	source_intf.rob source
 );
 	// h: read in commit; t: write in rename
 	rob_ptr_t h[COMMIT_WIDTH-1:0], t[FETCH_WIDTH-1:0], h_nxt, t_nxt;
@@ -129,6 +132,8 @@ module rob
 		assign w2[i].valid = commit.valid[i];
 		assign w2[i].addr = bank_offset(commit.instr[i].dst);
 		assign w2[i].entry = commit.instr[i].data;
+		assign wake.wake[i].valid = commit.valid[i];
+		assign wake.wake[i].id = commit.instr[i].dst;
 	end
 	// retire
 	u1 v_retire[COMMIT_WIDTH-1:0]/*verilator split_var*/;
@@ -150,6 +155,12 @@ module rob
 		for (int i = 0; i < COMMIT_WIDTH; i++) begin
 			ra1[bank(h[i])][i] = bank_offset(h[i]);
 			ra2[bank(h[i])][i] = bank_offset(h[i]);
+		end
+		for (int i = 0; i < AREG_READ_PORTS; i++) begin
+			ra2[bank(source.psrc1[i])][COMMIT_WIDTH + i] = bank_offset(source.psrc1[i]);
+		end
+		for (int i = 0; i < AREG_READ_PORTS; i++) begin
+			ra2[bank(source.psrc2[i])][COMMIT_WIDTH + AREG_READ_PORTS + i] = bank_offset(source.psrc2[i]);
 		end
 	end
 	
@@ -223,6 +234,12 @@ module rob
 		assign ready.v1[i] = c[ready.psrc1[i]];
 		assign ready.v2[i] = c[ready.psrc2[i]];
 	end
+
+	for (genvar i = 0; i < AREG_READ_PORTS; i++) begin
+		assign source.prf1[i] = r2[bank(source.psrc1[i])][COMMIT_WIDTH + i];
+		assign source.prf2[i] = r2[bank(source.psrc2[i])][COMMIT_WIDTH + AREG_READ_PORTS + i];
+	end
+	
 	
 endmodule
 `endif

@@ -11,7 +11,7 @@ package rename_pkg;
 	import config_pkg::*;
 
 	parameter R1_NUM = COMMIT_WIDTH;
-	parameter R2_NUM = COMMIT_WIDTH;
+	parameter R2_NUM = COMMIT_WIDTH + 2 * AREG_READ_PORTS;
 	typedef struct packed {
 		u1 valid;
 		preg_addr_t id;

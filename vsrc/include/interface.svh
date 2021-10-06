@@ -259,8 +259,9 @@ endinterface
 
 interface wake_intf();
 	import issue_pkg::*;
-	wake_req_t wake[ALU_WAKE_NUM - 1 : 0];
+	wake_req_t [COMMIT_WIDTH - 1 : 0]wake;
 	modport issue(input wake);
+	modport rob(output wake);
 endinterface
 
 interface ready_intf();

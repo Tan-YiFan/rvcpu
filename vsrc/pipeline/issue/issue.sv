@@ -78,6 +78,13 @@ module issue
 	
 	u8 full;
 
+	wake_req_t [COMMIT_WIDTH-1:0] wake_retire;
+	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
+		assign wake_retire[i].valid = retire.retire[i].valid;
+		assign wake_retire[i].id = retire.retire[i].preg;
+	end
+	
+
 	for (genvar i = 0; i < 4; i++) begin
 		alu_iqueue #(.QLEN(8)) alu_iqueue_inst (
 			.clk, .reset(reset),
@@ -85,8 +92,8 @@ module issue
 			.write(w_alu[i]),
 			.read(r_alu[i]),
 			.full(full[i]),
-			.wake('0),
-			.retire('0)
+			.wake(wake.wake),
+			.retire(wake_retire)
 		);
 	end
 
