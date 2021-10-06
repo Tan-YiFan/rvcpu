@@ -1,5 +1,5 @@
 # Set the frequency of tested module on board.
-DUT_FREQ ?= 90
+DUT_FREQ ?= 140
 
 BOARD ?= sim
 
