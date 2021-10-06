@@ -54,16 +54,17 @@ module ICache
 		wire [INDEX_BITS - 1:0] meta_addr = ireq.addr[OFFSET_BITS + INDEX_BITS -1 -: INDEX_BITS];
 		wire meta_strobe = valid_wen;
 		wire [META_WIDTH - 1:0] meta_write = {1'b1, tag};
-		wire [META_WIDTH - 1:0] meta_read = {valid_read, tag_read};
+		wire [META_WIDTH - 1:0] meta_read;
+		assign {valid_read, tag_read} = meta_read;
 		
-		wire [INDEX_BITS + OFFSET_BITS - READ_BITS - GROUP_BITS - 1:0][2 ** GROUP_BITS -1:0] data_addr, binfo_addr;
-		wire [INDEX_BITS + OFFSET_BITS - READ_BITS - GROUP_BITS - 1:0]  data_strobe, binfo_strobe;
-		wire [INDEX_BITS + OFFSET_BITS - READ_BITS - GROUP_BITS - 1:0][31:0] data_write, data_read;
-		binfo_t [INDEX_BITS + OFFSET_BITS - READ_BITS - GROUP_BITS - 1:0] binfo_write, binfo_read;
-		pc_t [INDEX_BITS + OFFSET_BITS - READ_BITS - GROUP_BITS - 1:0] this_pc;
+		wire [2 ** GROUP_BITS -1:0][INDEX_BITS + OFFSET_BITS - READ_BITS - GROUP_BITS - 1:0] data_addr, binfo_addr;
+		wire [2 ** GROUP_BITS -1:0]  data_strobe, binfo_strobe;
+		wire [2 ** GROUP_BITS -1:0][31:0] data_write, data_read;
+		binfo_t [2 ** GROUP_BITS -1:0] binfo_write, binfo_read;
+		pc_t [2 ** GROUP_BITS -1:0] this_pc;
 		for (genvar i = 0; i < 2 ** GROUP_BITS; i++) begin
 			assign data_addr[i] = state == INIT ?
-			ireq.addr[OFFSET_BITS + INDEX_BITS - 1:ALIGN_BITS + GROUP_BITS - 1] :
+			ireq.addr[OFFSET_BITS + INDEX_BITS - 1:READ_BITS + GROUP_BITS] :
 			{ireq.addr[OFFSET_BITS + INDEX_BITS - 1 -: INDEX_BITS], counter[OFFSET_BITS - ALIGN_BITS - 1: 1]};
 			assign data_strobe[i] = data_wen && counter[0] == i[1];
 			assign data_write[i] = i[0] ? cresp.data[63:32] : cresp.data[31:0];
@@ -113,7 +114,7 @@ module ICache
 
 		for (genvar i = 0; i < 2 ** GROUP_BITS; i++) begin
 			RAM_SinglePort #(
-				.ADDR_WIDTH(INDEX_BITS + OFFSET_BITS - READ_BITS - GROUP_BITS + 1),
+				.ADDR_WIDTH(INDEX_BITS + OFFSET_BITS - READ_BITS - GROUP_BITS),
 				.DATA_WIDTH(32),
 				.BYTE_WIDTH(32),
 				.MEM_TYPE(1),
@@ -127,12 +128,12 @@ module ICache
 			);
 
 			RAM_SinglePort #(
-				.ADDR_WIDTH(INDEX_BITS + OFFSET_BITS - READ_BITS - GROUP_BITS + 1),
+				.ADDR_WIDTH(INDEX_BITS + OFFSET_BITS - READ_BITS - GROUP_BITS),
 				.DATA_WIDTH(BINFO_WIDTH),
 				.BYTE_WIDTH(BINFO_WIDTH),
 				.MEM_TYPE(1),
 				.READ_LATENCY(0)
-			) meta_ram (
+			) binfo_ram (
 				.clk,  .en(1'b1),
 				.addr(binfo_addr[i]),
 				.strobe(binfo_strobe[i]),
@@ -201,7 +202,7 @@ module ICache
 	assign creq.burst = AXI_BURST_INCR;
 
 	always_ff @(posedge clk) begin
-		// if (data_wen) $display("addr %x, wdata %x", ram_addr, cresp.data);
+		// if (data_wen) $display("counter %x, wdata %x", counter, cresp.data);
 	end
 
 	

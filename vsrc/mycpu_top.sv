@@ -84,19 +84,6 @@ module mycpu_top
     //   );
     //   assign oresp.last = 1'b1;
     //   assign oresp.ready = 1'b1;
-
-      always_ff @(posedge aclk) begin
-	      if(0)
-			$display("hazard flush %x, %x, %x %x, stall %x %x %x %x", 
-			top.core.hazard_intf.flushD,
-			top.core.hazard_intf.flushE,
-			top.core.hazard_intf.flushM,
-			top.core.hazard_intf.flushW,
-			top.core.hazard_intf.stallF,
-			top.core.hazard_intf.stallD,
-			top.core.hazard_intf.stallE,
-			top.core.hazard_intf.stallM);
-      end
       
       
 `endif

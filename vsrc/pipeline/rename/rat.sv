@@ -44,8 +44,8 @@ module rat
 	always_ff @(posedge clk) begin
 		// rename
 		for (int i = 0; i < FETCH_WIDTH; i++) begin
-			if (rename.instr[i].valid && preg_addr_t'(rename.instr[i].dst) != 0) begin
-				t[preg_addr_t'(rename.instr[i].dst)] <= rename.psrc[i];
+			if (rename.instr[i].valid && creg_addr_t'(rename.instr[i].dst) != 0) begin
+				t[creg_addr_t'(rename.instr[i].dst)] <= rename.psrc[i];
 			end
 		end
 	end

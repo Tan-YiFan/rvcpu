@@ -12,10 +12,24 @@ module pcselect
 	pcselect_intf.pcselect self,
 	freg_intf.pcselect freg
 );
-	assign freg.pc_nxt = self.is_mret ? self.mepc :
-				 self.branch_taken ? self.pcbranch :
-			     self.jr 	       ? self.pcjr:
-			     self.jump         ? self.pcjump : self.pcplus4F;
+	always_comb begin
+		freg.pc_nxt = '0;
+		// pc + 4, 8, ...
+		for (int i = 0; i < FETCH_WIDTH; i++) begin
+			if (self.validF[i]) begin
+				freg.pc_nxt = self.pcF[i];
+			end
+		end
+		// branches
+		for (int i = 0; i < FETCH_WIDTH; i++) begin
+			if (self.branch_takenF[i]) begin
+				freg.pc_nxt = self.pcbranchF[i];
+				break;
+			end
+		end
+		
+	end
+	
 
 endmodule
 

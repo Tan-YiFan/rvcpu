@@ -3,6 +3,7 @@
 
 `ifdef VERILATOR
 `include "include/interface.svh"
+`include "pipeline/rename/raw_check.sv"
 `else
 `include "interface.svh"
 `endif

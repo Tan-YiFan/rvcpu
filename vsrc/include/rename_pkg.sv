@@ -9,6 +9,9 @@ package rename_pkg;
 	import common::*;
 	import decode_pkg::*;
 	import config_pkg::*;
+
+	parameter R1_NUM = 10;
+	parameter R2_NUM = 20;
 	typedef struct packed {
 		u1 valid;
 		preg_addr_t id;
@@ -52,10 +55,20 @@ package rename_pkg;
 	} rob_entry1_t;
 
 	typedef struct packed {
+		u1 valid;
+		logic [PREG_NUM/COMMIT_WIDTH-1:0] addr;
+		rob_entry1_t entry;
+	} rob_entry1_write_req;
+
+	typedef struct packed {
 		entry_data_t data;
 	} rob_entry2_t;
 	
-	
+	typedef struct packed {
+		u1 valid;
+		logic [$clog2(PREG_NUM/COMMIT_WIDTH)-1:0] addr;
+		rob_entry2_t entry;
+	} rob_entry2_write_req;
 
 	typedef struct packed {
 		struct packed {

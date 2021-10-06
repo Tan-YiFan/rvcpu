@@ -6,13 +6,19 @@
 `include "pipeline/fetch/fetch.sv"
 `include "pipeline/decode/decode.sv"
 `include "pipeline/execute/execute.sv"
-`include "pipeline/memory/memory.sv"
-`include "pipeline/writeback/writeback.sv"
-`include "pipeline/forward/forward.sv"
+// `include "pipeline/memory/memory.sv"
+// `include "pipeline/writeback/writeback.sv"
+
+// `include "pipeline/forward/forward.sv"
 `include "pipeline/hazard/hazard.sv"
 `include "pipeline/regfile/regfile.sv"
 `include "pipeline/regfile/pipereg.sv"
 `include "pipeline/csr/csr.sv"
+`include "pipeline/rename/rename.sv"
+`include "pipeline/rename/rob.sv"
+`include "pipeline/rename/rat.sv"
+`include "pipeline/issue/issue.sv"
+`include "pipeline/source/source.sv"
 
 `else
 `include "interface.svh"
@@ -39,13 +45,20 @@ module core
 	ireg_intf ireg_intf();
 	sreg_intf sreg_intf();
 	ereg_intf ereg_intf();
-	mreg_intf mreg_intf();
-	wreg_intf wreg_intf();
+	creg_intf creg_intf();
+	// mreg_intf mreg_intf();
+	// wreg_intf wreg_intf();
 	pcselect_intf pcselect_intf();
-	regfile_intf regfile_intf();
+	// regfile_intf regfile_intf();
 	forward_intf forward_intf();
 	hazard_intf hazard_intf();
 	csr_intf csr_intf();
+	source_intf source_intf();
+	retire_intf retire_intf();
+	rename_intf rename_intf();
+	commit_intf commit_intf();
+	wake_intf wake_intf();
+	ready_intf ready_intf();
 
 	mread_req mread;
 	mwrite_req mwrite;
@@ -92,7 +105,7 @@ module core
 	);
 	
 	fetch fetch(
-		.raw_instr(iresp.data),
+		.iresp,
 		.pc(pc),
 		.pcselect(pcselect_intf.fetch),
 		.freg(freg_intf.fetch),
@@ -111,34 +124,50 @@ module core
 		.self(rename_intf.rename)
 	);
 
+	issue issue (
+		.clk, .reset,
+		.ireg(ireg_intf.issue),
+		.sreg(sreg_intf.issue),
+		.wake(wake_intf.issue),
+		.ready(ready_intf.issue),
+		.retire(retire_intf.issue),
+		.hazard(hazard_intf.issue)
+	);
+
+	source source (
+		.sreg(sreg_intf.source),
+		.ereg(ereg_intf.source),
+		.self(source_intf.source)
+	);
+
 	execute execute(
 		.clk, .reset,
 		.ereg(ereg_intf.execute),
-		.mreg(mreg_intf.execute),
-		.forward(forward_intf.execute),
-		.hazard(hazard_intf.execute)
+		.creg(creg_intf.execute)
 	);
 
-	memory memory(
-		.mread, .mwrite, .rd(dresp.data),
-		.mreg(mreg_intf.memory),
-		.wreg(wreg_intf.memory),
-		.forward(forward_intf.memory),
-		.hazard(hazard_intf.memory)
-	);
+	// memory memory(
+	// 	.mread, .mwrite, .rd(dresp.data),
+	// 	.mreg(mreg_intf.memory),
+	// 	.wreg(wreg_intf.memory),
+	// 	.forward(forward_intf.memory),
+	// 	.hazard(hazard_intf.memory)
+	// );
 
-	writeback writeback(
-		.wreg(wreg_intf.writeback),
-		.regfile(regfile_intf.writeback),
-		.hazard(hazard_intf.writeback),
-		.forward(forward_intf.writeback),
-		.csr(csr_intf.writeback),
-		.rd(dresp.data)
-	);
+	// writeback writeback(
+	// 	.wreg(wreg_intf.writeback),
+	// 	.regfile(regfile_intf.writeback),
+	// 	.hazard(hazard_intf.writeback),
+	// 	.forward(forward_intf.writeback),
+	// 	.csr(csr_intf.writeback),
+	// 	.rd(dresp.data)
+	// );
 
 	regfile regfile(
 		.clk, .reset,
-		.self(regfile_intf.regfile)
+		.source(source_intf.regfile),
+		.retire(retire_intf.regfile)
+		// .self(regfile_intf.regfile)
 	);
 
 	hazard hazard (
@@ -146,14 +175,29 @@ module core
 		.i_data_ok(iresp.data_ok),
 		.d_data_ok(dresp.data_ok | ~dreq.valid)
 	);
-	forward forward(
-		.self(forward_intf.forward)
-	);
+	// forward forward(
+	// 	.self(forward_intf.forward)
+	// );
 
 	csr csr (
 		.clk, .reset,
 		.self(csr_intf.csr),
 		.pcselect(pcselect_intf.csr)
+	);
+
+	rob rob (
+		.clk, .reset,
+		.rename(rename_intf.rob),
+		.commit(commit_intf.rob),
+		.retire(retire_intf.rob),
+		.hazard(hazard_intf.rob),
+		.pcselect(pcselect_intf.rob)
+	);
+
+	rat rat (
+		.clk, .reset,
+		.rename(rename_intf.rat),
+		.retire(retire_intf.rat)
 	);
 
 	pipereg #(.T(pc_t), .INIT(PCINIT)) freg(
@@ -180,47 +224,55 @@ module core
 		.en(~hazard_intf.stallR)
 	);
 
-	pipereg #(.T(decode_data_t)) ereg (
+	pipereg #(.T(rename_data_t)) ireg (
 		.clk, .reset,
-		.in(ereg_intf.dataD_nxt),
-		.out(ereg_intf.dataD),
+		.in(ireg_intf.dataR_nxt),
+		.out(ireg_intf.dataR),
+		.flush(hazard_intf.flushI),
+		.en(~hazard_intf.stallI)
+	);
+
+	pipereg #(.T(issue_data_t)) sreg (
+		.clk, .reset,
+		.in(sreg_intf.dataI_nxt),
+		.out(sreg_intf.dataI),
+		.flush(hazard_intf.flushS),
+		.en(~hazard_intf.stallS)
+	);
+
+	pipereg #(.T(source_data_t)) ereg (
+		.clk, .reset,
+		.in(ereg_intf.dataS_nxt),
+		.out(ereg_intf.dataS),
 		.flush(hazard_intf.flushE),
 		.en(~hazard_intf.stallE)
 	);
 
-	pipereg #(.T(execute_data_t)) mreg (
+	pipereg #(.T(execute_data_t)) creg (
 		.clk, .reset,
-		.in(mreg_intf.dataE_nxt),
-		.out(mreg_intf.dataE),
-		.flush(hazard_intf.flushM),
-		.en(~hazard_intf.stallM)
-	);
-
-	pipereg #(.T(memory_data_t)) wreg (
-		.clk, .reset,
-		.in(wreg_intf.dataM_nxt),
-		.out(wreg_intf.dataM),
-		.flush(hazard_intf.flushW),
-		.en(1'b1)
+		.in(creg_intf.dataE_nxt),
+		.out(creg_intf.dataE),
+		.flush(hazard_intf.flushC),
+		.en(~hazard_intf.stallC)
 	);
 
 `ifdef VERILATOR
 	// u1 commit_valid;
 	// assign commit_valid = writeback.pc[31:28] == 4'd8;
-	DifftestInstrCommit DifftestInstrCommit(
-		.clock              (clk),
-		.coreid             (0),
-		.index              (0),
-		.valid              (writeback.pc != 64'b0 && writeback.pc != 64'd4),
-		.pc                 (writeback.pc - 4),
-		.instr              (0),
-		.skip               ((wreg_intf.dataM.instr.ctl.memwrite || wreg_intf.dataM.instr.ctl.memread) && ~writeback.result[31]),
-		.isRVC              (0),
-		.scFailed           (0),
-		.wen                (regfile_intf.valid),
-		.wdest              (regfile_intf.wa),
-		.wdata              (regfile_intf.wd)
-	);
+	// DifftestInstrCommit DifftestInstrCommit(
+	// 	.clock              (clk),
+	// 	.coreid             (0),
+	// 	.index              (0),
+	// 	.valid              (writeback.pc != 64'b0 && writeback.pc != 64'd4),
+	// 	.pc                 (writeback.pc - 4),
+	// 	.instr              (0),
+	// 	.skip               ((wreg_intf.dataM.instr.ctl.memwrite || wreg_intf.dataM.instr.ctl.memread) && ~writeback.result[31]),
+	// 	.isRVC              (0),
+	// 	.scFailed           (0),
+	// 	.wen                (regfile_intf.valid),
+	// 	.wdest              (regfile_intf.wa),
+	// 	.wdata              (regfile_intf.wd)
+	// );
 	      
 	DifftestArchIntRegState DifftestArchIntRegState (
 		.clock              (clk),
@@ -334,7 +386,7 @@ module core
 		if (~reset) begin
 			// $display("ireq: valid %d, pc %x", ireq.valid, ireq.addr);
 			if (iresp.data_ok) begin
-				// $display("pc %x, raw_instr %x", ireq.addr, iresp.data);
+				// $display("pc %x, raw_instr %x", ireq.addr, iresp.data[0].raw_instr);
 			end
 		end
 	end

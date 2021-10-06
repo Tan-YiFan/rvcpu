@@ -654,8 +654,9 @@ module decoder
 
 	assign instr.op = op;
 	assign instr.ctl = ctl;
-	assign instr.rs1 = rs1;
-	assign instr.rs2 = rs2;
+	assign instr.src1 = rs1;
+	assign instr.src2 = rs2;
+	assign instr.dst = rd;
 	assign instr.csr_addr = raw_instr[31:20];
 	assign instr.imm = imm;
 endmodule

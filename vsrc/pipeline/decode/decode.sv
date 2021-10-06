@@ -15,7 +15,7 @@ module decode
 	import fetch_pkg::*;(
 	input logic clk, reset,
 	dreg_intf.decode dreg,
-	rreg_intf.decode rreg,
+	rreg_intf.decode rreg
 );
 	decoded_instr_t instr[FETCH_WIDTH-1:0];
 
@@ -32,7 +32,7 @@ module decode
 			instr[i],
 			dreg.dataF.instr[i].pc,
 			dreg.dataF.instr[i].jump,
-			dreg.dataF.instr[i].pcjump,
+			dreg.dataF.instr[i].pcjump
 		};
 	end
 	assign rreg.dataD_nxt = dataD;

@@ -3,6 +3,10 @@
 
 `ifdef VERILATOR
 `include "include/interface.svh"
+`include "pipeline/issue/alu_iqueue.sv"
+`include "pipeline/issue/mem_iqueue.sv"
+`include "pipeline/issue/br_iqueue.sv"
+`include "pipeline/issue/mul_iqueue.sv"
 `else
 `include "interface.svh"
 `endif
@@ -17,52 +21,58 @@ module issue
 	sreg_intf.issue sreg,
 	wake_intf.issue wake,
 	ready_intf.issue ready,
+	retire_intf.issue retire,
 	hazard_intf.issue hazard
 );
 	rename_data_t dataR;
 	issue_data_t dataI;
 
-	iq_entry_t [3:0] entry;
+	iq_entry_t [FETCH_WIDTH-1:0] entry;
 	for (genvar i = 0; i < FETCH_WIDTH; i++) begin
         assign entry[i].valid = 1'b1;
         assign entry[i].dst = dataR.instr[i].dst;
-        assign entry[i].src1.valid = dataR.instr[i].src1.valid ? ready.v1[i] : 1'b1;
+        assign entry[i].src1.valid = dataR.instr[i].psrc1.valid ? ready.v1[i] : 1'b1;
         assign entry[i].src1.id = dataR.instr[i].src1;
 		assign entry[i].src1.pid = dataR.instr[i].psrc1.id;
-        assign entry[i].src1.forward_en = dataR.instr[i].src1.valid;
-        assign entry[i].src2.valid = dataR.instr[i].src2.valid ? ready.v2[i] : 1'b1;
+        assign entry[i].src1.forward_en = dataR.instr[i].psrc1.valid;
+        assign entry[i].src2.valid = dataR.instr[i].psrc2.valid ? ready.v2[i] : 1'b1;
         assign entry[i].src2.id = dataR.instr[i].src2;
 		assign entry[i].src2.pid = dataR.instr[i].psrc2.id;
-        assign entry[i].src2.forward_en = dataR.instr[i].src2.valid;
+        assign entry[i].src2.forward_en = dataR.instr[i].psrc2.valid;
         assign entry[i].ctl = dataR.instr[i].ctl;
-        assign entry[i].op = dataR.instr[i].op;
+        // assign entry[i].op = dataR.instr[i].op;
         assign entry[i].imm = dataR.instr[i].imm;
         assign entry[i].pc = dataR.instr[i].pc;
 	end
 	
 	write_req_t [3:0] w_alu;
+	
 	write_req_t [1:0][1:0] w_mem;
 	write_req_t [3:0] w_br;
 	write_req_t [3:0] w_mul;
+	read_resp_t [3:0] r_alu;
+	read_resp_t [1:0][1:0] r_mem;
+	read_resp_t [3:0] r_br;
+	read_resp_t [3:0] r_mul;
 	for (genvar i = 0; i < 4; i++) begin
-		assign w_alu[i].valid = dataR.instr[i].ctl.entry_type == ENTRY_ALU;
+		assign w_alu[i].valid = dataR.instr[i].valid && dataR.instr[i].ctl.entry_type == ENTRY_ALU;
 		assign w_alu[i].entry = entry[i];
 	end
 
 	for (genvar i = 0; i < 2; i++) begin
 		for (genvar j = 0; j < 2; j++) begin
-			assign w_mem[i][j].valid = dataR.instr[i * 2 + j].ctl.entry_type == ENTRY_MEM;
+			assign w_mem[i][j].valid = dataR.instr[i * 2 + j].valid && dataR.instr[i * 2 + j].ctl.entry_type == ENTRY_MEM;
 			assign w_mem[i][j].entry = entry[i * 2 + j];
 		end
 	end
 
 	for (genvar i = 0; i < 4; i++) begin
-		assign w_br[i].valid = dataR.instr[i].ctl.entry_type == ENTRY_BR;
+		assign w_br[i].valid = dataR.instr[i].valid && dataR.instr[i].ctl.entry_type == ENTRY_BR;
 		assign w_br[i].entry = entry[i];
 	end
 
 	for (genvar i = 0; i < 4; i++) begin
-		assign w_mul[i].valid = dataR.instr[i].ctl.entry_type == ENTRY_MUL;
+		assign w_mul[i].valid = dataR.instr[i].valid && dataR.instr[i].ctl.entry_type == ENTRY_MUL;
 		assign w_mul[i].entry = entry[i];
 	end
 	
@@ -73,8 +83,10 @@ module issue
 			.clk, .reset(reset),
 			.wen(~|full), .stall(1'b0),
 			.write(w_alu[i]),
-			.read(),
-			.full(full[i])
+			.read(r_alu[i]),
+			.full(full[i]),
+			.wake(),
+			.retire()
 		);
 	end
 
@@ -84,25 +96,54 @@ module issue
 			.wen(~|full), .stall(),
 			.write(w_mem[i]),
 			.read(),
-			.full(full[i + 4])
+			.full(full[i + 4]),
+			.wake(),
+			.retire()
 		);
 	end
 
 	br_iqueue #(.QLEN(4)) br_iqueue_inst (
 		.clk, .reset(reset),
 		.wen(~|full), .stall(),
-		.write(w_br[i]),
+		.write(w_br),
 		.read(),
-		.full(full[i + 6])
+		.full(full[6]),
+		.wake(),
+		.retire()
 	);
 	
 	mul_iqueue #(.QLEN(4)) mul_iqueue_inst (
 		.clk, .reset(reset),
 		.wen(~|full), .stall(),
-		.write(w_mul[i]),
+		.write(w_mul),
 		.read(),
-		.full(full[i + 7])
+		.full(full[7]),
+		.wake(),
+		.retire()
 	);
+
+	for (genvar i = 0; i < 4; i++) begin
+		assign dataI.alu_issue[i] = {
+			r_alu[i].entry.valid,
+			r_alu[i].entry.imm,
+			r_alu[i].entry.src1.id,
+			r_alu[i].entry.src2.id,
+			r_alu[i].entry.src1.pid,
+			r_alu[i].entry.src2.pid,
+			preg_addr_t'(r_alu[i].entry.dst),
+			r_alu[i].entry.src1.forward_en,
+			r_alu[i].entry.src2.forward_en,
+			r_alu[i].entry.ctl,
+			// r_alu[i].entry.op,
+			r_alu[i].entry.pc
+		};
+	end
+	
+	// always_ff @(posedge clk) begin
+	// 	if (dataI.alu_issue[0].valid) begin
+	// 		$display("%x", dataI.alu_issue[0].pc);
+	// 	end
+	// end
 	
 	assign sreg.dataI_nxt = dataI;
 	assign dataR = ireg.dataR;
