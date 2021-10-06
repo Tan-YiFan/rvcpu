@@ -284,7 +284,7 @@ module core
 		DifftestInstrCommit DifftestInstrCommit(
 			.clock              (clk),
 			.coreid             (0),
-			.index              (0),
+			.index              (i),
 			.valid              (retire_intf.retire[i].valid),
 			.pc                 (retire_intf.retire[i].pc),
 			.instr              (0),
@@ -295,6 +295,7 @@ module core
 			.wdest              (retire_intf.retire[i].dst),
 			.wdata              (retire_intf.retire[i].data)
 		);
+		
 	end
 	
 	      

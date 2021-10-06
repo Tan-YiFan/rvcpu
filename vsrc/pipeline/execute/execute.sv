@@ -22,10 +22,27 @@ module execute
 	execute_data_t dataE;
 
 	word_t [3:0] alu_result;
+	word_t [3:0] alusrca, alusrcb;
+	for (genvar i = 0; i < 4; i++) begin
+		always_comb begin
+			alusrca[i] = dataS.alu_source[i].d1;
+			if (dataS.alu_source[i].ctl.pc_as_src1) begin
+				alusrca[i] = dataS.alu_source[i].pc;
+			end
+		end
+		always_comb begin
+			alusrcb[i] = dataS.alu_source[i].d2;
+			if (dataS.alu_source[i].ctl.imm_as_src2) begin
+				alusrcb[i] = dataS.alu_source[i].imm;
+			end
+		end
+		
+	end
+	
 	for (genvar i = 0; i < 4; i++) begin
 		alu alu_inst (
-			.a(dataS.alu_source[i].d1),
-			.b(dataS.alu_source[i].d2),
+			.a(alusrca[i]),
+			.b(alusrcb[i]),
 			.c(alu_result[i]),
 			.alufunc(dataS.alu_source[i].ctl.alufunc)
 		);
@@ -39,9 +56,15 @@ module execute
 	end
 	
 	always_ff @(posedge clk) begin
-		if (dataS.alu_source[0].valid) begin
+		// if (dataS.alu_source[0].valid) begin
 			// $display("%x", dataS.alu_source[0].dst);
-		end
+		// end
+		// if (dataE.alu_commit[1].valid) begin
+			// $display("%x", dataE.alu_commit[1].data);
+		// end
+		// if (dataS.alu_source[1].valid) begin
+		// 	$display("%x", dataS.alu_source[1].ctl.pc_as_src1);
+		// end
 	end
 	
 

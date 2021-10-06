@@ -111,14 +111,12 @@ module rob
 
 	// rename
 	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
-		assign w1[i].valid = ~full && rename.instr[fetch_addr_t'(i - t[i])].valid;
-		assign w1[i].addr = bank_offset(t[fetch_addr_t'(i - t[i])]);
-		assign w1[i].entry = {
-			{w1[i].addr, bank_t'(i)}, // preg
-			rename.instr[fetch_addr_t'(i - t[i])].dst,
-			rename.instr[fetch_addr_t'(i - t[i])].pc,
-			rename.instr[fetch_addr_t'(i - t[i])].ctl
-		};
+		assign w1[i].valid = ~full && rename.instr[fetch_addr_t'(i - fetch_addr_t'(t[0]))].valid;
+		assign w1[i].addr = bank_offset(t[fetch_addr_t'(i - fetch_addr_t'(t[0]))]);
+		assign w1[i].entry.preg = {bank_offset(t[fetch_addr_t'(i - fetch_addr_t'(t[0]))]), bank_t'(i)};
+		assign w1[i].entry.creg = rename.instr[fetch_addr_t'(i - fetch_addr_t'(t[0]))].dst;
+		assign w1[i].entry.pc = rename.instr[fetch_addr_t'(i - fetch_addr_t'(t[0]))].pc;
+		assign w1[i].entry.ctl = rename.instr[fetch_addr_t'(i - fetch_addr_t'(t[0]))].ctl;
 	end
 
 	for (genvar i = 0; i < FETCH_WIDTH; i++) begin
@@ -133,9 +131,9 @@ module rob
 	end
 	// retire
 	u1 v_retire[COMMIT_WIDTH-1:0]/*verilator split_var*/;
-	assign v_retire[0] = c[h[0]] && h[0] != t[0];
+	assign v_retire[0] = c[preg_addr_t'(h[0])] && h[0] != t[0];
 	for (genvar i = 1; i < COMMIT_WIDTH; i++) begin
-		assign v_retire[i] = v_retire[i - 1] && c[h[i]] && h[i] != t[0];
+		assign v_retire[i] = v_retire[i - 1] && c[preg_addr_t'(h[i])] && h[i] != t[0];
 	end
 	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
 		assign ra1[bank(h[i])][i] = bank_offset(h[i]);
@@ -161,6 +159,7 @@ module rob
 		c_nxt = c;
 		// rename stage, set c to 0
 		t_nxt = t[0];
+		h_nxt = h[0];
 		if (~full) begin
 			for (int i = 0; i < FETCH_WIDTH; i++) begin
 				if (rename.instr[i].valid) begin
@@ -184,15 +183,23 @@ module rob
 			end
 		end
 		// retire
+		for (int i = 0; i < COMMIT_WIDTH; i++) begin
+			if (retire.retire[i].valid) begin
+				h_nxt = h[i] + 1;
+			end
+		end
 		
 	end
 
 	always_ff @(posedge clk) begin
-		if (retire.retire[1].valid) begin
-			$display("%x", retire.retire[1].pc);
-		end
+		// if (retire.retire[1].valid) begin
+			// $display("%x", retire.retire[1].pc);
+		// end
 		// if (commit.valid[0]) begin
 		// 	$display("%x", commit.instr[0].dst);
+		// end
+		// if (c[0]) begin
+		// 	$display("%x, %x", h[0], t[0]);
 		// end
 	end
 	
