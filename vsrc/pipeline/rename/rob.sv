@@ -125,6 +125,28 @@ module rob
 		assign rename.psrc[i] = t[i];
 	end
 	
+	// commit
+	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
+		assign w2[i].valid = commit.valid[i];
+		assign w2[i].addr = bank_offset(commit.instr[i].dst);
+		assign w2[i].entry = commit.instr[i].data;
+	end
+	// retire
+	u1 v_retire[COMMIT_WIDTH-1:0]/*verilator split_var*/;
+	assign v_retire[0] = c[h[0]] && h[0] != t[0];
+	for (genvar i = 1; i < COMMIT_WIDTH; i++) begin
+		assign v_retire[i] = v_retire[i - 1] && c[h[i]] && h[i] != t[0];
+	end
+	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
+		assign ra1[bank(h[i])][i] = bank_offset(h[i]);
+		assign ra2[bank(h[i])][i] = bank_offset(h[i]);
+		assign retire.retire[i].valid = v_retire[i];
+		assign retire.retire[i].data = r2[bank(h[i])][i].data;
+		assign retire.retire[i].ctl = r1[bank(h[i])][i].ctl;
+		assign retire.retire[i].dst = r1[bank(h[i])][i].creg;
+		assign retire.retire[i].preg = h[i];
+		assign retire.retire[i].pc = r1[bank(h[i])][i].pc;
+	end
 	
 
 	always_ff @(posedge clk) begin
@@ -152,10 +174,28 @@ module rob
 			end
 		end
 		// commit2 stage, set c to 1
-
+		for (int i = 0; i < FETCH_WIDTH; i++) begin
+			if (commit.valid[i]) begin
+				for (int j = 0; j < PREG_NUM; j++) begin
+					if (j == preg_addr_t'(commit.instr[i].dst)) begin
+						c_nxt[j] = 1'b1;
+					end
+				end
+			end
+		end
+		// retire
+		
 	end
 
-
+	always_ff @(posedge clk) begin
+		if (retire.retire[1].valid) begin
+			$display("%x", retire.retire[1].pc);
+		end
+		// if (commit.valid[0]) begin
+		// 	$display("%x", commit.instr[0].dst);
+		// end
+	end
+	
 	
 endmodule
 `endif

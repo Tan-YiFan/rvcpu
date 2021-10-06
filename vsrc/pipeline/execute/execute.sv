@@ -32,7 +32,16 @@ module execute
 	end
 
 	for (genvar i = 0; i < 4; i++) begin
-		assign dataE.
+		assign dataE.alu_commit[i].valid = dataS.alu_source[i].valid;
+		assign dataE.alu_commit[i].data = alu_result[i];
+		assign dataE.alu_commit[i].extra = '0;
+		assign dataE.alu_commit[i].dst = dataS.alu_source[i].dst;
+	end
+	
+	always_ff @(posedge clk) begin
+		if (dataS.alu_source[0].valid) begin
+			// $display("%x", dataS.alu_source[0].dst);
+		end
 	end
 	
 

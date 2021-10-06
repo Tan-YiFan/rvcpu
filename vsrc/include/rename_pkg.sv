@@ -10,8 +10,8 @@ package rename_pkg;
 	import decode_pkg::*;
 	import config_pkg::*;
 
-	parameter R1_NUM = 10;
-	parameter R2_NUM = 20;
+	parameter R1_NUM = COMMIT_WIDTH;
+	parameter R2_NUM = COMMIT_WIDTH;
 	typedef struct packed {
 		u1 valid;
 		preg_addr_t id;

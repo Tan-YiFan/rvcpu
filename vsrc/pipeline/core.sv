@@ -19,6 +19,7 @@
 `include "pipeline/rename/rat.sv"
 `include "pipeline/issue/issue.sv"
 `include "pipeline/source/source.sv"
+`include "pipeline/commit/commit.sv"
 
 `else
 `include "interface.svh"
@@ -144,6 +145,12 @@ module core
 		.clk, .reset,
 		.ereg(ereg_intf.execute),
 		.creg(creg_intf.execute)
+	);
+
+	commit commit (
+		.clk, .reset,
+		.creg(creg_intf.commit),
+		.self(commit_intf.commit)
 	);
 
 	// memory memory(
@@ -273,6 +280,23 @@ module core
 	// 	.wdest              (regfile_intf.wa),
 	// 	.wdata              (regfile_intf.wd)
 	// );
+	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
+		DifftestInstrCommit DifftestInstrCommit(
+			.clock              (clk),
+			.coreid             (0),
+			.index              (0),
+			.valid              (retire_intf.retire[i].valid),
+			.pc                 (retire_intf.retire[i].pc),
+			.instr              (0),
+			.skip               (0),
+			.isRVC              (0),
+			.scFailed           (0),
+			.wen                (retire_intf.retire[i].ctl.regwrite),
+			.wdest              (retire_intf.retire[i].dst),
+			.wdata              (retire_intf.retire[i].data)
+		);
+	end
+	
 	      
 	DifftestArchIntRegState DifftestArchIntRegState (
 		.clock              (clk),

@@ -30,7 +30,7 @@ module issue
 	iq_entry_t [FETCH_WIDTH-1:0] entry;
 	for (genvar i = 0; i < FETCH_WIDTH; i++) begin
         assign entry[i].valid = 1'b1;
-        assign entry[i].dst = dataR.instr[i].dst;
+        assign entry[i].dst = dataR.instr[i].pdst;
         assign entry[i].src1.valid = dataR.instr[i].psrc1.valid ? ready.v1[i] : 1'b1;
         assign entry[i].src1.id = dataR.instr[i].src1;
 		assign entry[i].src1.pid = dataR.instr[i].psrc1.id;
@@ -85,8 +85,8 @@ module issue
 			.write(w_alu[i]),
 			.read(r_alu[i]),
 			.full(full[i]),
-			.wake(),
-			.retire()
+			.wake('0),
+			.retire('0)
 		);
 	end
 
@@ -123,27 +123,28 @@ module issue
 	);
 
 	for (genvar i = 0; i < 4; i++) begin
-		assign dataI.alu_issue[i] = {
-			r_alu[i].entry.valid,
-			r_alu[i].entry.imm,
-			r_alu[i].entry.src1.id,
-			r_alu[i].entry.src2.id,
-			r_alu[i].entry.src1.pid,
-			r_alu[i].entry.src2.pid,
-			preg_addr_t'(r_alu[i].entry.dst),
-			r_alu[i].entry.src1.forward_en,
-			r_alu[i].entry.src2.forward_en,
-			r_alu[i].entry.ctl,
-			// r_alu[i].entry.op,
-			r_alu[i].entry.pc
-		};
+		assign dataI.alu_issue[i].valid = r_alu[i].entry.valid;
+		assign dataI.alu_issue[i].imm = r_alu[i].entry.imm;
+		assign dataI.alu_issue[i].src1 = r_alu[i].entry.src1.id;
+		assign dataI.alu_issue[i].src2 = r_alu[i].entry.src2.id;
+		assign dataI.alu_issue[i].psrc1 = r_alu[i].entry.src1.pid;
+		assign dataI.alu_issue[i].psrc2 = r_alu[i].entry.src2.pid;
+		assign dataI.alu_issue[i].dst = preg_addr_t'(r_alu[i].entry.dst);
+		assign dataI.alu_issue[i].forward_en1 = r_alu[i].entry.src1.forward_en;
+		assign dataI.alu_issue[i].forward_en2 = r_alu[i].entry.src2.forward_en;
+		assign dataI.alu_issue[i].ctl = r_alu[i].entry.ctl;
+		assign dataI.alu_issue[i].pc = r_alu[i].entry.pc;
+
 	end
 	
-	// always_ff @(posedge clk) begin
-	// 	if (dataI.alu_issue[0].valid) begin
-	// 		$display("%x", dataI.alu_issue[0].pc);
-	// 	end
-	// end
+	always_ff @(posedge clk) begin
+		// if (dataI.alu_issue[0].valid) begin
+			// $display("%x", dataI.alu_issue[0].dst);
+		// end
+		// if (dataR.instr[0].valid) begin
+		// 	$display("%x", dataR.instr[0].dst);
+		// end
+	end
 	
 	assign sreg.dataI_nxt = dataI;
 	assign dataR = ireg.dataR;

@@ -74,21 +74,16 @@ module source
 	
 	
 	for (genvar i = 0; i < 4; i++) begin
-		assign dataS.alu_source[i] = {
-			dataI.alu_issue[i].valid,
-			rd1[i],
-			rd2[i],
-			dataI.alu_issue[i].imm,
-			dataI.alu_issue[i].src1,
-			dataI.alu_issue[i].src2,
-			dataI.alu_issue[i].psrc1,
-			dataI.alu_issue[i].psrc2,
-			dataI.alu_issue[i].dst,
-			dataI.alu_issue[i].forward_en1,
-			dataI.alu_issue[i].forward_en2,
-			dataI.alu_issue[i].ctl,
-			dataI.alu_issue[i].pc
-		};
+		assign dataS.alu_source[i].valid = dataI.alu_issue[i].valid;
+		assign dataS.alu_source[i].d1 = rd1[i];
+		assign dataS.alu_source[i].imm = dataI.alu_issue[i].imm;
+		assign dataS.alu_source[i].src1 = dataI.alu_issue[i].src1;
+		assign dataS.alu_source[i].src2 = dataI.alu_issue[i].src2;
+		assign dataS.alu_source[i].dst = dataI.alu_issue[i].dst;
+		assign dataS.alu_source[i].forward_en1 = dataI.alu_issue[i].forward_en1;
+		assign dataS.alu_source[i].forward_en2 = dataI.alu_issue[i].forward_en2;
+		assign dataS.alu_source[i].ctl = dataI.alu_issue[i].ctl;
+		assign dataS.alu_source[i].pc = dataI.alu_issue[i].pc;
 	end
 
 	assign dataI = sreg.dataI;

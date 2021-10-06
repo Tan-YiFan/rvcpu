@@ -36,7 +36,7 @@ test:
 	export NOOP_HOME=$(NOOP_HOME)
 	mkdir -p build
 	cp -r vsrc/* build
-	make EMU_TRACE=1 emu -j12 NOOP_HOME=$(NOOP_HOME) NEMU_HOME=.
+	make emu -j12 NOOP_HOME=$(NOOP_HOME) NEMU_HOME=.
 	./build/emu -b 0 -e 0 -i ./ready-to-run/coremark-riscv64-nutshell.bin --diff ./riscv64-nemu-interpreter-so || true
 	#./build/emu -b 0 -e 0 -i ./ready-to-run/dhrystone-riscv64-nutshell.bin --diff ./riscv64-nemu-interpreter-so || true
 	#./build/emu -b 0 -e 0 -i ./ready-to-run/microbench-riscv64-nutshell.bin --diff ./riscv64-nemu-interpreter-so || true

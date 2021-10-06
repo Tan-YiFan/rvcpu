@@ -221,6 +221,7 @@ interface retire_intf();
         control_t ctl;
         creg_addr_t dst;
         preg_addr_t preg;
+		pc_t pc;
     } [COMMIT_WIDTH-1:0]retire;
 	modport rat(
         input retire
@@ -237,9 +238,11 @@ interface retire_intf();
 endinterface
 
 interface commit_intf();
-	u1 valid;
-	modport commit(input valid);
-	modport rob(output valid);
+	import commit_pkg::*;
+	u1 [COMMIT_WIDTH-1:0] valid;
+	commit_instr_t [COMMIT_WIDTH-1:0] instr;
+	modport commit(output instr, valid);
+	modport rob(input instr, valid);
 endinterface
 
 

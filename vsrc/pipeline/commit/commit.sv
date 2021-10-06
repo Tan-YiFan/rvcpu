@@ -4,17 +4,68 @@
 `ifdef VERILATOR
 `include "include/interface.svh"
 `else
-// `include "interface.svh"
+`include "interface.svh"
 `endif
 
-// module commit
-// 	import common::*;(
-// 	input logic clk, reset,
-// 	creg_intf.commit creg,
-	
-// );
+module commit
+	import common::*;
+	import execute_pkg::*;
+	import commit_pkg::*;(
+	input logic clk, reset,
+	creg_intf.commit creg,
+	commit_intf.commit self
+);
+	execute_data_t dataE;
 
-// endmodule
+	localparam WNUM = 1;
+	u1 [COMMIT_WIDTH-1:0][WNUM-1:0] valid;
+	commit_instr_t [COMMIT_WIDTH-1:0][WNUM-1:0] write;
+	always_comb begin
+		valid = '0;
+		write = 'x;
+		// alu
+		for (int i = 0; i < 4; i++) begin
+			if (dataE.alu_commit[i].valid) begin
+				`ASSERT(valid[u2'(dataE.alu_commit[i].dst)][0] == 1'b0);
+				valid[u2'(dataE.alu_commit[i].dst)][0] = 1'b1;
+				write[u2'(dataE.alu_commit[i].dst)][0] = dataE.alu_commit[i];
+			end
+		end
+		
+	end
+	
+	
+
+	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
+		fifo_mw1r #(
+			.QLEN(16),
+			.TYPE(commit_instr_t),
+			.WNUM(WNUM)
+		) fifo_mw1r_inst (
+			.clk, .reset,
+			.valid(valid[i]),
+			.write(write[i]),
+			.read_valid(self.valid[i]),
+			.read(self.instr[i])
+		);
+	end
+	
+	always_ff @(posedge clk) begin
+		// if (valid[0]) begin
+		// 	$display("%x", write[0][0].dst);
+		// end
+		// if (dataE.alu_commit[0].valid) begin
+			// $display("%x", dataE.alu_commit[0].dst);
+		// end
+		// if (self.valid[0]) begin
+		// 	$display("%x", self.instr[0].dst);
+		// end
+	end
+	
+	
+	assign dataE = creg.dataE;
+
+endmodule
 
 module fifo_mw1r
 	import common::*;#(
@@ -30,64 +81,83 @@ module fifo_mw1r
 	output logic read_valid,
 	output TYPE read
 );
-	addr_t h, t[WNUM-1:0], h_nxt, t_nxt;
-	localparam type bank_t = logic [$clog2(WNUM)-1:0];
-	localparam type bank_offset_t = logic[$clog2(QLEN)-1-$clog2(WNUM):0];
-	function bank_t bank(addr_t p);
-		return p[$clog2(WNUM)-1:0];
-	endfunction
-	function bank_offset_t bank_offset(addr_t p);
-		return p[$clog2(QLEN)-1:$clog2(WNUM)];
-	endfunction
-	always_ff @(posedge clk) begin
-		if (reset) begin
-			h <= '0;
-			t[0] <= '0;
-			t[1] <= 1;
-			t[2] <= 2;
-			t[3] <= 3;
-		end else begin
-			h <= h_nxt;
-			t[0] <= t_nxt;
-			t[1] <= t_nxt + 1;
-			t[2] <= t_nxt + 2;
-			t[3] <= t_nxt + 3;
-		end
-	end
-	TYPE data[WNUM-1:0][QLEN/WNUM-1:0];
-	TYPE reads[WNUM-1:0];
-	for (genvar i = 0; i < 4; i++) begin
-		assign reads[i] = data[i][bank_offset(h)];
-	end
-	assign read = reads[bank(h)];
-	assign read_valid = h != t[0];
-	
-	// assign read = data[bank(h)][bank_offset(h)];
-	assign h_nxt = h + read_valid;
-	logic [$clog2(WNUM)-1:0] wnum;
-	TYPE [WNUM-1:0] wdata;
-	logic [WNUM-1:0] wen;
-	always_comb begin
-		wnum = '0;
-		wdata = '0;
-		wen = '0;
-		for (int i = 0; i < WNUM; i++) begin
-			if (valid[i]) begin
-				wdata[wnum] = write[i];
-				wen[bank(t[wnum])] = 1'b1;
-				wnum++;
-			end
-		end
-	end
-	assign t_nxt = t[0] + wnum;
-	for (genvar i = 0; i < WNUM; i++) begin
+	if (WNUM == 1) begin
+		addr_t h, t;
+		TYPE data[QLEN-1:0];
+		assign read_valid = h != t;
+		assign read = data[h];
 		always_ff @(posedge clk) begin
-			if (wen[i]) begin
-				data[i][bank_offset(t[i])] <= wdata[i];
+			if (reset) begin
+				h <= '0;
+				t <= '0;
+			end else begin
+				t <= t + valid[0];
+				h <= h + read_valid;
+			end
+		end
+		always_ff @(posedge clk) begin
+			if (valid) begin
+				data[t] <= write;
+			end
+		end
+	end else begin
+		addr_t h, t[WNUM-1:0], h_nxt, t_nxt;
+		localparam type bank_t = logic [$clog2(WNUM)-1:0];
+		localparam type bank_offset_t = logic[$clog2(QLEN)-1-$clog2(WNUM):0];
+		function bank_t bank(addr_t p);
+			return p[$clog2(WNUM)-1:0];
+		endfunction
+		function bank_offset_t bank_offset(addr_t p);
+			return p[$clog2(QLEN)-1:$clog2(WNUM)];
+		endfunction
+		always_ff @(posedge clk) begin
+			if (reset) begin
+				h <= '0;
+				for (int i = 0; i < WNUM; i++) begin
+					t[i] <= i;
+				end
+				
+			end else begin
+				h <= h_nxt;
+				for (int i = 0; i < WNUM; i++) begin
+					t[i] <= i + t_nxt;
+				end
+			end
+		end
+		TYPE data[WNUM-1:0][QLEN/WNUM-1:0];
+		TYPE reads[WNUM-1:0];
+		for (genvar i = 0; i < WNUM; i++) begin
+			assign reads[i] = data[i][bank_offset(h)];
+		end
+		assign read = reads[bank(h)];
+		assign read_valid = h != t[0];
+		
+		// assign read = data[bank(h)][bank_offset(h)];
+		assign h_nxt = h + read_valid;
+		logic [$clog2(WNUM)-1:0] wnum;
+		TYPE [WNUM-1:0] wdata;
+		logic [WNUM-1:0] wen;
+		always_comb begin
+			wnum = '0;
+			wdata = '0;
+			wen = '0;
+			for (int i = 0; i < WNUM; i++) begin
+				if (valid[i]) begin
+					wdata[wnum] = write[i];
+					wen[bank(t[wnum])] = 1'b1;
+					wnum++;
+				end
+			end
+		end
+		assign t_nxt = t[0] + wnum;
+		for (genvar i = 0; i < WNUM; i++) begin
+			always_ff @(posedge clk) begin
+				if (wen[i]) begin
+					data[i][bank_offset(t[i])] <= wdata[i];
+				end
 			end
 		end
 	end
-		
 	
 endmodule
 

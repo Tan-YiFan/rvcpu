@@ -4,18 +4,18 @@
 `ifdef VERILATOR
 `include "include/common.sv"
 `include "include/decode_pkg.sv"
+`include "include/commit_pkg.sv"
 `endif
 package execute_pkg;
 
 	import common::*;
 	import decode_pkg::*;
+	import commit_pkg::*;
 	typedef struct packed {
-		decoded_instr_t instr;
-		u64 result;
-		u64 writedata;
-		u64 csr;
-		word_t pcplus4;
-		creg_addr_t writereg;
+		commit_instr_t [3:0] alu_commit;
+		commit_instr_t [1:0] mem_commit;
+		commit_instr_t br_commit;
+		commit_instr_t mul_commit;
 	} execute_data_t;
 	
 endpackage
