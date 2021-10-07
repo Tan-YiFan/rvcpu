@@ -138,7 +138,8 @@ module core
 	source source (
 		.sreg(sreg_intf.source),
 		.ereg(ereg_intf.source),
-		.self(source_intf.source)
+		.self(source_intf.source),
+		.csr(csr_intf.source)
 	);
 
 	execute execute(

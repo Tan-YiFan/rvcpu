@@ -685,7 +685,7 @@ module decoder
 	// assign instr.src1 = rs1;
 	// assign instr.src2 = rs2;
 	// assign instr.dst = rd;
-	assign instr.csr_addr = raw_instr[31:20];
+	assign instr.csr_addr = ctl.is_mret ? 12'h341 : raw_instr[31:20];
 	assign instr.imm = imm;
 endmodule
 

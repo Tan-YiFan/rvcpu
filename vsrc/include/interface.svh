@@ -159,8 +159,8 @@ interface csr_intf();
 
 	u1 is_mret;
 	
-	modport decode(output ra, input rd);
-	modport writeback(output valid, wa, wd, is_mret);
+	modport source(output ra, input rd);
+	modport rob(output valid, wa, wd, is_mret);
 	modport csr(input ra, valid, wa, wd, is_mret, output rd);
 endinterface
 

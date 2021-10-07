@@ -64,7 +64,7 @@ module br_iqueue
 			end
 		end
 	end
-	assign full = free != wnum;
+	assign full = free < wnum;
 
 	typedef struct packed {
 		u1 valid;
@@ -104,7 +104,7 @@ module br_iqueue
 	// end
 
 	assign read.entry = {
-		v[chosen],
+		iq_valid(chosen),
 		v1[chosen],
 		c1[chosen],
 		s1[chosen],
@@ -247,6 +247,20 @@ module br_iqueue
 		end
 	end
 		
+	for (genvar i = 0; i < 4; i++) begin
+		always_ff @(posedge clk) begin
+			if (write[i].valid) begin
+				// $display("%x", write[i].entry.pc);
+			end
+		end
+	end
+	// always_ff @(posedge clk) begin
+	// 	if (read.entry.valid) begin
+	// 		$display("%x", read.entry.pc);
+	// 	end
+	// end
+	
+	
 	
 endmodule
 

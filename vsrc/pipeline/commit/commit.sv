@@ -17,7 +17,7 @@ module commit
 );
 	execute_data_t dataE;
 
-	localparam WNUM = 1;
+	localparam WNUM = 8;
 	u1 [COMMIT_WIDTH-1:0][WNUM-1:0] valid;
 	commit_instr_t [COMMIT_WIDTH-1:0][WNUM-1:0] write;
 	always_comb begin
@@ -31,6 +31,12 @@ module commit
 				write[u2'(dataE.alu_commit[i].dst)][0] = dataE.alu_commit[i];
 			end
 		end
+		for (int i = 0; i < 1; i++) begin
+			if (dataE.br_commit[i].valid) begin
+				valid[u2'(dataE.br_commit[i].dst)][1] = 1'b1;
+				write[u2'(dataE.br_commit[i].dst)][1] = dataE.br_commit[i];
+			end
+		end
 		
 	end
 	
@@ -38,7 +44,7 @@ module commit
 
 	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
 		fifo_mw1r #(
-			.QLEN(16),
+			.QLEN(32),
 			.TYPE(logic[$bits(commit_instr_t)-1:0]),
 			.WNUM(WNUM)
 		) fifo_mw1r_inst (
@@ -139,11 +145,11 @@ module fifo_mw1r
 		logic [WNUM-1:0] wen;
 		always_comb begin
 			wnum = '0;
-			wdata = '0;
+			wdata = 'x;
 			wen = '0;
 			for (int i = 0; i < WNUM; i++) begin
 				if (valid[i]) begin
-					wdata[wnum] = write[i];
+					wdata[bank(t[wnum])] = write[i];
 					wen[bank(t[wnum])] = 1'b1;
 					wnum++;
 				end
@@ -154,6 +160,7 @@ module fifo_mw1r
 			always_ff @(posedge clk) begin
 				if (wen[i]) begin
 					data[i][bank_offset(t[i])] <= wdata[i];
+					// $display("%x", wdata[i]);
 				end
 			end
 		end

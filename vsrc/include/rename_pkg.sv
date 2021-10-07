@@ -32,8 +32,14 @@ package rename_pkg;
             word_t data;
         } mem;
         struct packed {
-			word_t extra;
-			// u1 pd_fail;
+			union packed {
+				struct packed {
+					u31 zero;
+					u1 pd_fail;
+					pc_t correct_pc;
+				} branch;
+				word_t csr;
+			} extra;
         	word_t data;
         } branch;
         struct packed {

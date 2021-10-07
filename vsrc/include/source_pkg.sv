@@ -29,6 +29,7 @@ package source_pkg;
         source_instr_t[2-1:0] mem_source;
         source_instr_t[1-1:0] branch_source;
         source_instr_t[1-1:0] mult_source;
+		word_t csr;
 	} source_data_t;
 	
 

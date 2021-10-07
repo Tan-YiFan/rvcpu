@@ -13,7 +13,8 @@ module source
 	import source_pkg::*;(
 	sreg_intf.source sreg,
 	ereg_intf.source ereg,
-	source_intf.source self
+	source_intf.source self,
+	csr_intf.source csr
 );
 	issue_data_t dataI;
 	source_data_t dataS;
@@ -76,6 +77,7 @@ module source
 	for (genvar i = 0; i < 4; i++) begin
 		assign dataS.alu_source[i].valid = dataI.alu_issue[i].valid;
 		assign dataS.alu_source[i].d1 = rd1[i];
+		assign dataS.alu_source[i].d2 = rd2[i];
 		assign dataS.alu_source[i].imm = dataI.alu_issue[i].imm;
 		assign dataS.alu_source[i].src1 = dataI.alu_issue[i].src1;
 		assign dataS.alu_source[i].src2 = dataI.alu_issue[i].src2;
@@ -85,6 +87,23 @@ module source
 		assign dataS.alu_source[i].ctl = dataI.alu_issue[i].ctl;
 		assign dataS.alu_source[i].pc = dataI.alu_issue[i].pc;
 	end
+
+	for (genvar i = 0; i < 1; i++) begin
+		assign dataS.branch_source[i].valid = dataI.branch_issue[i].valid;
+		assign dataS.branch_source[i].d1 = rd1[i + 6];
+		assign dataS.branch_source[i].d2 = rd2[i + 6];
+		assign dataS.branch_source[i].imm = dataI.branch_issue[i].imm;
+		assign dataS.branch_source[i].src1 = dataI.branch_issue[i].src1;
+		assign dataS.branch_source[i].src2 = dataI.branch_issue[i].src2;
+		assign dataS.branch_source[i].dst = dataI.branch_issue[i].dst;
+		assign dataS.branch_source[i].forward_en1 = dataI.branch_issue[i].forward_en1;
+		assign dataS.branch_source[i].forward_en2 = dataI.branch_issue[i].forward_en2;
+		assign dataS.branch_source[i].ctl = dataI.branch_issue[i].ctl;
+		assign dataS.branch_source[i].pc = dataI.branch_issue[i].pc;
+	end
+
+	assign csr.ra = 'x;
+	assign dataS.csr = csr.rd;
 
 	assign dataI = sreg.dataI;
 	assign ereg.dataS_nxt = dataS;

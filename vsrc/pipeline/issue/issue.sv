@@ -51,9 +51,9 @@ module issue
 	write_req_t [3:0] w_br;
 	write_req_t [3:0] w_mul;
 	read_resp_t [3:0] r_alu;
-	read_resp_t [1:0][1:0] r_mem;
-	read_resp_t [3:0] r_br;
-	read_resp_t [3:0] r_mul;
+	read_resp_t [1:0] r_mem;
+	read_resp_t [0:0] r_br;
+	read_resp_t [0:0] r_mul;
 	for (genvar i = 0; i < 4; i++) begin
 		assign w_alu[i].valid = dataR.instr[i].valid && dataR.instr[i].ctl.entry_type == ENTRY_ALU;
 		assign w_alu[i].entry = entry[i];
@@ -104,8 +104,8 @@ module issue
 			.write(w_mem[i]),
 			.read(),
 			.full(full[i + 4]),
-			.wake(),
-			.retire()
+			.wake(wake.wake),
+			.retire(wake_retire)
 		);
 	end
 
@@ -113,10 +113,10 @@ module issue
 		.clk, .reset(reset),
 		.wen(~|full), .stall(),
 		.write(w_br),
-		.read(),
+		.read(r_br),
 		.full(full[6]),
-		.wake(),
-		.retire()
+		.wake(wake.wake),
+		.retire(wake_retire)
 	);
 	
 	mul_iqueue #(.QLEN(4)) mul_iqueue_inst (
@@ -125,8 +125,8 @@ module issue
 		.write(w_mul),
 		.read(),
 		.full(full[7]),
-		.wake(),
-		.retire()
+		.wake(wake.wake),
+		.retire(wake_retire)
 	);
 
 	for (genvar i = 0; i < 4; i++) begin
@@ -143,6 +143,21 @@ module issue
 		assign dataI.alu_issue[i].pc = r_alu[i].entry.pc;
 
 	end
+	
+	for (genvar i = 0; i < 1; i++) begin
+		assign dataI.branch_issue[i].valid = r_br[i].entry.valid;
+		assign dataI.branch_issue[i].imm = r_br[i].entry.imm;
+		assign dataI.branch_issue[i].src1 = r_br[i].entry.src1.id;
+		assign dataI.branch_issue[i].src2 = r_br[i].entry.src2.id;
+		assign dataI.branch_issue[i].psrc1 = r_br[i].entry.src1.pid;
+		assign dataI.branch_issue[i].psrc2 = r_br[i].entry.src2.pid;
+		assign dataI.branch_issue[i].dst = preg_addr_t'(r_br[i].entry.dst);
+		assign dataI.branch_issue[i].forward_en1 = r_br[i].entry.src1.forward_en;
+		assign dataI.branch_issue[i].forward_en2 = r_br[i].entry.src2.forward_en;
+		assign dataI.branch_issue[i].ctl = r_br[i].entry.ctl;
+		assign dataI.branch_issue[i].pc = r_br[i].entry.pc; 
+	end
+	
 
 	for (genvar i = 0; i < FETCH_WIDTH; i++) begin
 		assign ready.psrc1[i] = dataR.instr[i].psrc1.id;
@@ -159,14 +174,15 @@ module issue
 		// end
 	end
 
-	for (genvar i = 0; i < 4; i++) begin
+	for (genvar i = 0; i < 1; i++) begin
 		always_ff @(posedge clk) begin
 			if (dataI.alu_issue[i].dst == 2 && dataI.alu_issue[i].valid) begin
-				$display("%x", dataI.alu_issue[i].pc);
+				// $display("%x", dataI.alu_issue[i].pc);
+			end
+			if (dataI.branch_issue[i].valid) begin
+				// $display("%x", dataI.branch_issue[i].pc);
 			end
 		end
-		
-		
 	end
 	
 	
