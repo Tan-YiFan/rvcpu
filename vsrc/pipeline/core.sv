@@ -126,7 +126,7 @@ module core
 	);
 
 	issue issue (
-		.clk, .reset,
+		.clk, .reset(reset | hazard_intf.flushC),
 		.ireg(ireg_intf.issue),
 		.sreg(sreg_intf.issue),
 		.wake(wake_intf.issue),
@@ -143,13 +143,13 @@ module core
 	);
 
 	execute execute(
-		.clk, .reset,
+		.clk, .reset(reset | hazard_intf.flushC),
 		.ereg(ereg_intf.execute),
 		.creg(creg_intf.execute)
 	);
 
 	commit commit (
-		.clk, .reset,
+		.clk, .reset(reset | hazard_intf.flushC),
 		.creg(creg_intf.commit),
 		.self(commit_intf.commit)
 	);
@@ -189,12 +189,11 @@ module core
 
 	csr csr (
 		.clk, .reset,
-		.self(csr_intf.csr),
-		.pcselect(pcselect_intf.csr)
+		.self(csr_intf.csr)
 	);
 
 	rob rob (
-		.clk, .reset,
+		.clk, .reset(reset | hazard_intf.flushC),
 		.rename(rename_intf.rob),
 		.commit(commit_intf.rob),
 		.retire(retire_intf.rob),
@@ -206,7 +205,7 @@ module core
 	);
 
 	rat rat (
-		.clk, .reset,
+		.clk, .reset(reset | hazard_intf.flushC),
 		.rename(rename_intf.rat),
 		.retire(retire_intf.rat)
 	);

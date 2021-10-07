@@ -27,6 +27,13 @@ module pcselect
 				break;
 			end
 		end
+		// rob
+		for (int i = 0; i < COMMIT_WIDTH; i++) begin
+			if (self.validR[i]) begin
+				freg.pc_nxt = self.pcbranchR[i];
+				break;
+			end
+		end
 		
 	end
 	

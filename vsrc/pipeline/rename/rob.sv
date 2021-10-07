@@ -131,16 +131,35 @@ module rob
 	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
 		assign w2[i].valid = commit.valid[i];
 		assign w2[i].addr = bank_offset(commit.instr[i].dst);
-		assign w2[i].entry = commit.instr[i].data;
+		assign w2[i].entry = {commit.instr[i].extra, commit.instr[i].data};
 		assign wake.wake[i].valid = commit.valid[i];
 		assign wake.wake[i].id = commit.instr[i].dst;
 	end
 	// retire
-	u1 v_retire[COMMIT_WIDTH-1:0]/*verilator split_var*/;
-	assign v_retire[0] = c[preg_addr_t'(h[0])] && h[0] != t[0];
-	for (genvar i = 1; i < COMMIT_WIDTH; i++) begin
-		assign v_retire[i] = v_retire[i - 1] && c[preg_addr_t'(h[i])] && h[i] != t[0];
+	u1 [COMMIT_WIDTH-1:0]v_retire;
+	u1 [COMMIT_WIDTH-1:0]validR;
+	always_comb begin
+		v_retire = '0;
+		v_retire[0] = c[preg_addr_t'(h[0])] && h[0] != t[0];
+		validR = '0;
+		if (r1[bank(h[0])][0].ctl.entry_type == ENTRY_BR &&
+				r2[bank(h[0])][0].data.branch.extra.branch.pd_fail) begin
+					validR[0] = v_retire[0];
+		end
+		for (int i = 1; i < COMMIT_WIDTH; i++) begin
+			v_retire[i] = v_retire[i - 1] && c[preg_addr_t'(h[i])] && h[i] != t[0] && ~validR[i-1];
+			if (r1[bank(h[i])][i].ctl.entry_type == ENTRY_BR &&
+				r2[bank(h[i])][i].data.branch.extra.branch.pd_fail) begin
+					validR[i] = v_retire[i];
+			end
+		end
+		
 	end
+	
+	// assign v_retire[0] = c[preg_addr_t'(h[0])] && h[0] != t[0];
+	// for (genvar i = 1; i < COMMIT_WIDTH; i++) begin
+	// 	assign v_retire[i] = v_retire[i - 1] && c[preg_addr_t'(h[i])] && h[i] != t[0] && ~|validR[i-1:0];
+	// end
 	always_comb begin
 		for (int i = 0; i < COMMIT_WIDTH; i++) begin
 			for (int j = 0; j < R1_NUM; j++) begin
@@ -163,6 +182,19 @@ module rob
 			ra2[bank(source.psrc2[i])][COMMIT_WIDTH + AREG_READ_PORTS + i] = bank_offset(source.psrc2[i]);
 		end
 	end
+	// always_comb begin
+	// 	validR = '0;
+	// 	for (int i = 0; i < COMMIT_WIDTH; i++) begin
+	// 		if (~retire.retire[i].valid) begin
+	// 			break;
+	// 		end
+	// 		if (r1[bank(h[i])][i].ctl.entry_type == ENTRY_BR &&
+	// 			r2[bank(h[i])][i].data.branch.extra.branch.pd_fail) begin
+	// 				validR[i] = 1'b1;
+	// 		end
+	// 	end
+	// end
+	
 	
 	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
 		assign retire.retire[i].valid = v_retire[i];
@@ -171,6 +203,8 @@ module rob
 		assign retire.retire[i].dst = r1[bank(h[i])][i].creg;
 		assign retire.retire[i].preg = h[i];
 		assign retire.retire[i].pc = r1[bank(h[i])][i].pc;
+		assign pcselect.pcbranchR[i] = r2[bank(h[i])][i].data.branch.extra.branch.correct_pc;
+		assign pcselect.validR[i] = validR[i];
 	end
 	
 
@@ -240,6 +274,7 @@ module rob
 		assign source.prf2[i] = r2[bank(source.psrc2[i])][COMMIT_WIDTH + AREG_READ_PORTS + i];
 	end
 	
-	
+	assign hazard.pd_fail = |validR;
+	assign hazard.rob_full = full;
 endmodule
 `endif

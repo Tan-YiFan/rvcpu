@@ -44,7 +44,7 @@ module commit
 
 	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
 		fifo_mw1r #(
-			.QLEN(32),
+			.QLEN(16),
 			.TYPE(logic[$bits(commit_instr_t)-1:0]),
 			.WNUM(WNUM)
 		) fifo_mw1r_inst (

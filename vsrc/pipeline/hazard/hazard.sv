@@ -45,20 +45,20 @@ module hazard
 	// assign self.flushM = (~self.mult_ok & d_data_ok) | (flush_ex & i_data_ok);
 	// assign self.flushW = ~d_data_ok;
 
-	assign self.stallF = ~i_data_ok;
-	assign self.stallD = 1'b0;
-	assign self.stallR = 1'b0;
-	assign self.stallI = 1'b0;
+	assign self.stallF = ~i_data_ok | self.rob_full | self.iq_full;
+	assign self.stallD = self.rob_full | self.iq_full;
+	assign self.stallR = self.rob_full | self.iq_full;
+	assign self.stallI = self.iq_full;
 	assign self.stallS = 1'b0;
 	assign self.stallE = 1'b0;
 	assign self.stallC = 1'b0;
 
-	assign self.flushD = ~i_data_ok;
-	assign self.flushR = 1'b0;
-	assign self.flushI = 1'b0;
-	assign self.flushS = 1'b0;
-	assign self.flushE = 1'b0;
-	assign self.flushC = 1'b0;
+	assign self.flushD = ~i_data_ok | self.pd_fail;
+	assign self.flushR = self.pd_fail;
+	assign self.flushI = self.pd_fail | self.rob_full;
+	assign self.flushS = self.pd_fail | self.iq_full;
+	assign self.flushE = self.pd_fail;
+	assign self.flushC = self.pd_fail;
 endmodule
 
 

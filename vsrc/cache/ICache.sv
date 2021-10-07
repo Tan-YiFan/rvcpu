@@ -92,11 +92,11 @@ module ICache
 			/* verilator lint_off CMPCONST */
 			assign iresp.data[i].valid = ireq.addr[3:2] <= off;
 			/* verilator lint_on CMPCONST */
-			assign iresp.data[i].raw_instr = data_read[i];
-			assign iresp.data[i].branch = binfo_read[i].branch;
-			assign iresp.data[i].call = binfo_read[i].call;
-			assign iresp.data[i].ret = binfo_read[i].ret;
-			assign iresp.data[i].pc_nxt = binfo_read[i].pc;
+			assign iresp.data[i].raw_instr = data_read[u2'(i + ireq.addr[3:2])];
+			assign iresp.data[i].branch = binfo_read[u2'(i + ireq.addr[3:2])].branch;
+			assign iresp.data[i].call = binfo_read[u2'(i + ireq.addr[3:2])].call;
+			assign iresp.data[i].ret = binfo_read[u2'(i + ireq.addr[3:2])].ret;
+			assign iresp.data[i].pc_nxt = binfo_read[u2'(i + ireq.addr[3:2])].pc;
 		end
 		RAM_SinglePort #(
 			.ADDR_WIDTH(INDEX_BITS),

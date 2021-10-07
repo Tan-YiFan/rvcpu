@@ -48,12 +48,13 @@ module bru
 				
 			end
 		endcase
+		branch_taken &= ctl.branch;
 	end
 
 	always_comb begin
-		pc_correct = 'x;
+		pc_correct = pc + 4;
 		unique case(1'b1)
-			ctl.branch: pc_correct = pc + imm;
+			branch_taken: pc_correct = pc + imm;
 			ctl.jump: pc_correct = ctl.jr ? a + imm : pc + imm;
 			ctl.is_mret: pc_correct = csr;
 			default: begin
@@ -86,6 +87,7 @@ module bru
 		pd_fail,
 		pc_correct
 	};
+	
 	
 endmodule
 

@@ -188,6 +188,7 @@ module issue
 	
 	assign sreg.dataI_nxt = dataI;
 	assign dataR = ireg.dataR;
+	assign hazard.iq_full = |full;
 endmodule
 
 

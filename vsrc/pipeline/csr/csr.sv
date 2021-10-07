@@ -13,8 +13,7 @@ module csr
 	import decode_pkg::*;
 	import csr_pkg::*;(
 	input logic clk, reset,
-	csr_intf.csr self,
-	pcselect_intf.csr pcselect
+	csr_intf.csr self
 	// exception_intf.csr exception
 
 );
@@ -88,7 +87,6 @@ module csr
 		// 	regs_nxt.mstatus.mie = 1'b0;
 		// end
 	end
-	assign pcselect.mepc = regs.mepc;
 	
 	
 endmodule

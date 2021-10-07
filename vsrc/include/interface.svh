@@ -29,12 +29,12 @@ import source_pkg::*;
 interface pcselect_intf();
 	pc_t [FETCH_WIDTH-1:0] pcF, pcbranchF;
 	u1 [FETCH_WIDTH-1:0] validF, branch_takenF;
-	pc_t mepc;
+	pc_t [COMMIT_WIDTH-1:0] pcbranchR;
+	u1 [COMMIT_WIDTH-1:0] validR;
 
-	modport pcselect (input pcF, pcbranchF, validF, branch_takenF);
+	modport pcselect (input pcF, pcbranchF, validF, branch_takenF, pcbranchR, validR);
 	modport fetch (output pcF, pcbranchF, validF, branch_takenF);
-	modport csr (output mepc);
-	modport rob (input mepc);
+	modport rob (output pcbranchR, validR);
 endinterface
 
 interface freg_intf();
@@ -140,13 +140,13 @@ endinterface
 interface hazard_intf();
 	logic stallF, stallD, stallR, stallI, stallS, stallE, stallC,
 		      flushD, flushR, flushI, flushS, flushE, flushC;
-	u1 branch_miss, iq_full, rob_full;
+	u1 iq_full, rob_full, pd_fail;
 	modport issue(output iq_full);
-	modport rob(output rob_full, branch_miss);
+	modport rob(output rob_full, pd_fail);
 	
 	modport hazard (output stallF, stallD, stallR, stallI, stallS, stallE, stallC,
 		flushD, flushR, flushI, flushS, flushE, flushC,
-					input branch_miss, iq_full, rob_full);
+					input pd_fail, iq_full, rob_full);
 endinterface
 
 interface csr_intf();

@@ -57,7 +57,7 @@ module execute
 			.imm(dataS.branch_source[i].imm),
 			.ctl(dataS.branch_source[i].ctl),
 			.pc(dataS.branch_source[i].pc),
-			.pcjump('x),
+			.pcjump(dataS.branch_source[i].pc + 4),
 			.jump(1'b0),
 			.csr(dataS.csr),
 			.data(bru_result[i]),
