@@ -11,7 +11,7 @@ variables:
     GIT_DEPTH: "1"
 
 default:
-  image: gitlab.agileserve.org.cn:15050/liushiqi/xs-env:v2.0
+  image: gitlab.agileserve.org.cn:15050/liushiqi/xs-env:v2.1
   tags: 
     - k8s
 
@@ -111,9 +111,7 @@ copy_fpga_am:
   stage: fpga_src
   script:
     - mkdir -p build
-    - cp ${AM_HOME}/apps/coremark/build/coremark-riscv64-nutshell_nf.elf build
-    - cp ${AM_HOME}/apps/dhrystone/build/dhrystone-riscv64-nutshell_nf.elf build
-    - cp ${AM_HOME}/apps/microbench/build/microbench-riscv64-nutshell_nf.elf build
+    - ./scripts/copy_am.sh rv64imafdc
   needs: []
   artifacts:
     name: "$CI_JOB_STAGE-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
