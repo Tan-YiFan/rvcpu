@@ -17,7 +17,31 @@ package memory_pkg;
 		u64 pcplus4;
 		u64 csr;
 	} memory_data_t;
+
+	typedef struct packed {
+		u1 valid;
+		msize_t msize;
+		u64 addr;
+		u64 data;
+		rob_addr_t rob_addr;
+	} wbuffer_entry_t;
+
+	typedef wbuffer_entry_t wbuffer_wreq_t;
 	
+	typedef struct packed {
+		u1 valid;
+		rob_addr_t rob_addr;
+	} wbuffer_creq_t;
+	
+	typedef struct packed {
+		
+	} wbuffer_rreq_t;
+	
+	typedef struct packed {
+		
+	} wbuffer_rresp_t;
+	
+
 	
 endpackage
 
