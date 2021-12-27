@@ -11,7 +11,7 @@ variables:
     GIT_DEPTH: "1"
 
 default:
-  image: gitlab.agileserve.org.cn:15050/liushiqi/xs-env:v2.0
+  image: gitlab.agileserve.org.cn:15050/liushiqi/xs-env:v2.5
   tags: 
     - k8s
 
@@ -37,7 +37,7 @@ coremark:
   stage: run_sim
   script:
     - export NOOP_HOME=$(pwd)
-    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/coremark/build/coremark-riscv64-nutshell.bin | tee ${NOOP_HOME}/build/sim.txt || true
+    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/coremark/build/coremark-riscv64-nutshell_rv64im.bin | tee ${NOOP_HOME}/build/sim.txt || true
     - export SIM_TIME=$(awk '/Guest cycle spent:/{print $5}' ${NOOP_HOME}/build/sim.txt)
     - bash -c "if grep -q 'HIT GOOD TRAP' ${NOOP_HOME}/build/sim.txt; then echo "Succeeded!"; else ${NOOP_HOME}/build/emu -b $(expr ${SIM_TIME} - 1000) -e ${SIM_TIME} --dump-wave -i ${AM_HOME}/apps/coremark/build/coremark-riscv64-nutshell.bin 2> /dev/null; exit 1; fi"
   needs:
@@ -52,7 +52,7 @@ dhrystone:
   stage: run_sim
   script:
     - export NOOP_HOME=$(pwd)
-    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/dhrystone/build/dhrystone-riscv64-nutshell.bin | tee ${NOOP_HOME}/build/sim.txt || true
+    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/dhrystone/build/dhrystone-riscv64-nutshell_rv64im.bin | tee ${NOOP_HOME}/build/sim.txt || true
     - export SIM_TIME=$(awk '/Guest cycle spent:/{print $5}' ${NOOP_HOME}/build/sim.txt)
     - bash -c "if grep -q 'HIT GOOD TRAP' ${NOOP_HOME}/build/sim.txt; then echo "Succeeded!"; else ${NOOP_HOME}/build/emu -b $(expr ${SIM_TIME} - 1000) -e ${SIM_TIME} --dump-wave -i ${AM_HOME}/apps/dhrystone/build/dhrystone-riscv64-nutshell.bin 2> /dev/null; exit 1; fi"
   needs:
@@ -67,7 +67,7 @@ microbench:
   stage: run_sim
   script:
     - export NOOP_HOME=$(pwd)
-    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/microbench/build/microbench-riscv64-nutshell.bin | tee ${NOOP_HOME}/build/sim.txt || true
+    - ./build/emu -b 0 -e 0 -i ${AM_HOME}/apps/microbench/build/microbench-riscv64-nutshell_rv64im.bin | tee ${NOOP_HOME}/build/sim.txt || true
     - export SIM_TIME=$(awk '/Guest cycle spent:/{print $5}' ${NOOP_HOME}/build/sim.txt)
     - bash -c "if grep -q 'HIT GOOD TRAP' ${NOOP_HOME}/build/sim.txt; then echo "Succeeded!"; else ${NOOP_HOME}/build/emu -b $(expr ${SIM_TIME} - 1000) -e ${SIM_TIME} --dump-wave -i ${AM_HOME}/apps/microbench/build/microbench-riscv64-nutshell.bin 2> /dev/null; exit 1; fi"
   needs:
@@ -111,9 +111,7 @@ copy_fpga_am:
   stage: fpga_src
   script:
     - mkdir -p build
-    - cp ${AM_HOME}/apps/coremark/build/coremark-riscv64-nutshell_nf.elf build
-    - cp ${AM_HOME}/apps/dhrystone/build/dhrystone-riscv64-nutshell_nf.elf build
-    - cp ${AM_HOME}/apps/microbench/build/microbench-riscv64-nutshell_nf.elf build
+    - ./scripts/copy_am.sh rv64im
   needs: []
   artifacts:
     name: "$CI_JOB_STAGE-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHORT_SHA"
