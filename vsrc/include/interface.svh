@@ -177,10 +177,33 @@ endinterface
 // 	modport writeback(output valid, wa, wd);
 // endinterface
 
-interface bp_intf(
-	/* From iresp */
-	
-);
+interface bp_intf();
+	import common::*;
+	/* Read */
+	u32 [FETCH_WIDTH-1:0] pcF;
+	u1 [FETCH_WIDTH-1:0] call;
+	u1 [FETCH_WIDTH-1:0] ret;
+	u1 [FETCH_WIDTH-1:0] pred_taken;
+	u32 pc_ret;
+
+	/* Update */
+	u32 pc_update;
+	u1 valid;
+	u1 taken;
+
+	modport fetch (
+		output pcF, call, ret,
+		input pred_taken, pc_ret
+	);
+
+	modport bp (
+		input pcF, call, ret, pc_update, valid, taken,
+		output pred_taken, pc_ret
+	);
+
+	modport commit (
+		output pc_update, valid, taken
+	);
 
 endinterface
 
@@ -269,6 +292,34 @@ interface ready_intf();
 	preg_addr_t [FETCH_WIDTH-1:0] psrc1, psrc2;
 	modport issue(input v1, v2, output psrc1, psrc2);
 	modport rob(output v1, v2, input psrc1, psrc2);
+endinterface
+
+interface wbuffer_intf();
+	import common::*;
+	import memory_pkg::*;
+	/* Read */
+	wbuffer_rreq_t [RMEM_WIDTH-1:0] rreq;
+	wbuffer_rresp_t [RMEM_WIDTH-1:0] rresp;
+
+	/* Write */
+	wbuffer_wreq_t [WMEM_WIDTH-1:0] wreq;
+
+	/* Commit */
+	wbuffer_creq_t [WMEM_WIDTH-1:0] creq;
+
+	modport memory(
+		output rreq, wreq,
+		input rresp
+	);
+
+	modport wbuffer(
+		input rreq, wreq, creq,
+		output rresp
+	);
+
+	modport commit(
+		output creq
+	);
 endinterface
 
 `endif

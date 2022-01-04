@@ -19,6 +19,8 @@ package config_pkg;
 	parameter COMMIT_WIDTH = 4;
 
 	parameter PREG_NUM = 64;
+	parameter RMEM_WIDTH = 2;
+	parameter WMEM_WIDTH = 2;
 	
 endpackage
 

@@ -21,24 +21,26 @@ package memory_pkg;
 	typedef struct packed {
 		u1 valid;
 		msize_t msize;
-		u64 addr;
-		u64 data;
-		rob_addr_t rob_addr;
+		strobe_t strobe;
+		u32 addr;
+		u8[7:0] data;
+		// rob_addr_t rob_addr;
 	} wbuffer_entry_t;
 
 	typedef wbuffer_entry_t wbuffer_wreq_t;
 	
 	typedef struct packed {
 		u1 valid;
-		rob_addr_t rob_addr;
+		// rob_addr_t rob_addr;
 	} wbuffer_creq_t;
 	
 	typedef struct packed {
-		
+		u32 addr;
 	} wbuffer_rreq_t;
 	
 	typedef struct packed {
-		
+		strobe_t valid;
+		u8[7:0] data;
 	} wbuffer_rresp_t;
 	
 

@@ -47,7 +47,7 @@ module issue
 	
 	write_req_t [3:0] w_alu;
 	
-	write_req_t [1:0][1:0] w_mem;
+	write_req_t [3:0] w_mem;
 	write_req_t [3:0] w_br;
 	write_req_t [3:0] w_mul;
 	read_resp_t [3:0] r_alu;
@@ -59,12 +59,17 @@ module issue
 		assign w_alu[i].entry = entry[i];
 	end
 
-	for (genvar i = 0; i < 2; i++) begin
+	/* for (genvar i = 0; i < 2; i++) begin
 		for (genvar j = 0; j < 2; j++) begin
 			assign w_mem[i][j].valid = dataR.instr[i * 2 + j].valid && dataR.instr[i * 2 + j].ctl.entry_type == ENTRY_MEM;
 			assign w_mem[i][j].entry = entry[i * 2 + j];
 		end
+	end */
+	for (genvar i = 0; i < 4; i++) begin
+		assign w_mem[i].valid = dataR.instr[i].valid && dataR.instr[i].ctl.entry_type == ENTRY_MEM;
+		assign w_mem[i].entry = entry[i];
 	end
+	
 
 	for (genvar i = 0; i < 4; i++) begin
 		assign w_br[i].valid = dataR.instr[i].valid && dataR.instr[i].ctl.entry_type == ENTRY_BR;
@@ -97,7 +102,7 @@ module issue
 		);
 	end
 
-	for (genvar i = 0; i < 2; i++) begin
+	/* for (genvar i = 0; i < 2; i++) begin
 		mem_iqueue #(.QLEN(4)) mem_iqueue_inst (
 			.clk, .reset(reset),
 			.wen(~|full), .stall(),
@@ -107,11 +112,21 @@ module issue
 			.wake(wake.wake),
 			.retire(wake_retire)
 		);
-	end
+	end */
+
+	imem_iqueue #(.QLEN(16)) imem_iqueue_inst (
+		.clk, .reset,
+		.wen(~|full), .stall('0),
+		.write(w_mem),
+		.read(r_mem),
+		.full(full[5]),
+		.wake(wake.wake),
+		.retire(wake_retire)
+	)
 
 	br_iqueue #(.QLEN(4)) br_iqueue_inst (
 		.clk, .reset(reset),
-		.wen(~|full), .stall(),
+		.wen(~|full), .stall('0),
 		.write(w_br),
 		.read(r_br),
 		.full(full[6]),
@@ -121,9 +136,9 @@ module issue
 	
 	mul_iqueue #(.QLEN(4)) mul_iqueue_inst (
 		.clk, .reset(reset),
-		.wen(~|full), .stall(),
+		.wen(~|full), .stall('0),
 		.write(w_mul),
-		.read(),
+		.read(r_mul),
 		.full(full[7]),
 		.wake(wake.wake),
 		.retire(wake_retire)
