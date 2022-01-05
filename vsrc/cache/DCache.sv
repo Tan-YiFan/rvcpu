@@ -185,7 +185,7 @@ module DCache
 		.ADDR_WIDTH(OFFSET_BITS + INDEX_BITS - ALIGN_BITS),
 		.DATA_WIDTH(64),
 		.BYTE_WIDTH(8),
-		.MEM_TYPE(3),
+		.MEM_TYPE(0),
 		.READ_LATENCY(1)
 	) data_ram (
 		.clk,  .en(1'b1),
