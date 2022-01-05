@@ -19,7 +19,13 @@ module rob
     pcselect_intf.rob pcselect,
 	ready_intf.rob ready,
 	wake_intf.rob wake,
-	source_intf.rob source
+	source_intf.rob source,
+	wbuffer_intf.rob wbuffer,
+	bp_intf.rob bp,
+
+	input dbus_resp_t[WMEM_WIDTH-1:0] dresp,
+	output cbus_req_t ureq,
+	input cbus_resp_t uresp
 );
 	// h: read in commit; t: write in rename
 	rob_ptr_t h[COMMIT_WIDTH-1:0], t[FETCH_WIDTH-1:0], h_nxt, t_nxt;
@@ -129,25 +135,74 @@ module rob
 	
 	// commit
 	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
-		assign w2[i].valid = commit.valid[i];
+		assign w2[i].valid = commit.valid[i] && commit.instr[i].valid;
 		assign w2[i].addr = bank_offset(commit.instr[i].dst);
 		assign w2[i].entry = {commit.instr[i].extra, commit.instr[i].data};
-		assign wake.wake[i].valid = commit.valid[i];
+		assign wake.wake[i].valid = commit.valid[i] && commit.instr[i].valid;
 		assign wake.wake[i].id = commit.instr[i].dst;
 	end
 	// retire
 	u1 [COMMIT_WIDTH-1:0]v_retire;
 	u1 [COMMIT_WIDTH-1:0]validR;
+
+	u2 wnum;
+	u2 wmem_id[1:0];
+
+	always_comb begin
+		wnum = '0;
+		wmem_id[0] = 'x;
+		wmem_id[1] = 'x;
+		for (int i = 0; i < 4; i++) begin
+			if (~c[preg_addr_t'(h[i])]) break;
+			if (~r2[bank(h[i])][i].data.mem.extra.uncached
+			&& r1[bank(h[i])][i].ctl.memwrite) begin
+				wmem_id[wnum] = i;
+				wnum++;
+				// if (r1[bank(h[i])][i].pc == 32'h80002664) $display("%x", wnum, i);
+				if (wnum == 2) break;
+			end
+		end
+		
+	end
+	for (genvar i = 0; i < 4; i++) begin
+		always_ff @(posedge clk) begin
+			// if (r1[bank(h[i])][i].pc == 32'h80002664) $display("%x", r2[bank(h[i])][i].data.mem.extra.uncached);
+		end
+		
+	end
+	
+	
 	always_comb begin
 		v_retire = '0;
-		v_retire[0] = c[preg_addr_t'(h[0])] && h[0] != t[0];
+
+		/* Complete */
+		v_retire[0] = c[preg_addr_t'(h[0])]
+					&& h[0] != t[0]
+					&& ~(r1[bank(h[0])][0].ctl.entry_type == ENTRY_MEM && r2[bank(h[0])][0].data.mem.extra.uncached && ~uresp.last)
+					;
+		if (ureq.valid) begin
+			v_retire[0] = v_retire[0] && uresp.ready;
+		end else begin
+			v_retire[0] = v_retire[0] && dresp[0].data_ok && dresp[1].data_ok;
+		end
 		validR = '0;
+
+		/* Branch Predict Failed */
 		if (r1[bank(h[0])][0].ctl.entry_type == ENTRY_BR &&
 				r2[bank(h[0])][0].data.branch.extra.branch.pd_fail) begin
 					validR[0] = v_retire[0];
 		end
 		for (int i = 1; i < COMMIT_WIDTH; i++) begin
-			v_retire[i] = v_retire[i - 1] && c[preg_addr_t'(h[i])] && h[i] != t[0] && ~validR[i-1];
+			v_retire[i] = v_retire[i - 1] 
+			&& c[preg_addr_t'(h[i])] 
+			&& h[i] != t[0] 
+			&& ~validR[i-1]
+			&& ~(r1[bank(h[0])][0].ctl.entry_type == ENTRY_MEM && r2[bank(h[0])][0].data.mem.extra.uncached)
+			&& ~(r1[bank(h[i])][i].ctl.entry_type == ENTRY_MEM && r2[bank(h[i])][i].data.mem.extra.uncached)
+			&& ~ureq.valid
+
+			&& ~(r1[bank(h[i])][i].ctl.memwrite && wnum == 2 && wmem_id[1] != i)
+			;
 			if (r1[bank(h[i])][i].ctl.entry_type == ENTRY_BR &&
 				r2[bank(h[i])][i].data.branch.extra.branch.pd_fail) begin
 					validR[i] = v_retire[i];
@@ -194,17 +249,29 @@ module rob
 	// 		end
 	// 	end
 	// end
+
+	u64 rd_uncached;
+	readdata readdata(
+        ._rd(uresp.data),
+        .msize(r1[bank(h[0])][0].ctl.msize),
+        .addr(ureq.addr[2:0]),
+		.mem_unsigned(r1[bank(h[0])][0].ctl.mem_unsigned),
+        .rd(rd_uncached)
+    );
 	
 	
 	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
 		assign retire.retire[i].valid = v_retire[i];
-		assign retire.retire[i].data = r2[bank(h[i])][i].data;
+		assign retire.retire[i].data = ureq.valid ? rd_uncached : r2[bank(h[i])][i].data;
 		assign retire.retire[i].ctl = r1[bank(h[i])][i].ctl;
 		assign retire.retire[i].dst = r1[bank(h[i])][i].creg;
 		assign retire.retire[i].preg = h[i];
 		assign retire.retire[i].pc = r1[bank(h[i])][i].pc;
+		assign retire.retire[i].uncached = ureq.valid;
 		assign pcselect.pcbranchR[i] = r2[bank(h[i])][i].data.branch.extra.branch.correct_pc;
 		assign pcselect.validR[i] = validR[i];
+		
+		
 	end
 	
 
@@ -262,6 +329,7 @@ module rob
 		// if (c[0]) begin
 		// 	$display("%x, %x", h[0], t[0]);
 		// end
+		// $display("%x %x %x %x", c[0], c[1], c[2], c[3]);
 	end
 	
 	for (genvar i = 0; i < FETCH_WIDTH; i++) begin
@@ -276,5 +344,31 @@ module rob
 	
 	assign hazard.pd_fail = |validR;
 	assign hazard.rob_full = full;
+
+	assign ureq.valid =
+	c[preg_addr_t'(h[0])]
+	&& r1[bank(h[0])][0].ctl.entry_type == ENTRY_MEM 
+	&& r2[bank(h[0])][0].data.mem.extra.uncached;
+	assign ureq.is_write = r1[bank(h[0])][0].ctl.memwrite;
+	assign ureq.size = r2[bank(h[0])][0].data.mem.extra.msize;
+	assign ureq.addr = r2[bank(h[0])][0].data.mem.extra.addr;
+	assign ureq.strobe = r2[bank(h[0])][0].data.mem.extra.strobe;
+	assign ureq.data = r2[bank(h[0])][0].data.mem.data;
+	assign ureq.len = MLEN1;
+	assign ureq.burst = AXI_BURST_FIXED;
+
+	// for (genvar i = 0; i < 2; i++) begin
+	// 	assign wbuffer.creq[i].valid = (wnum > i) && c[preg_addr_t'(h[wmem_id[i]])];
+	// end
+	assign wbuffer.creq[0].valid = (wnum != 0) && c[preg_addr_t'(h[wmem_id[0]])];
+	assign wbuffer.creq[1].valid = (wnum == 2) && c[preg_addr_t'(h[wmem_id[1]])];
+	always_ff @(posedge clk) begin
+		// if (wbuffer.creq[0].valid) $display("%x", retire.retire[wmem_id[0]].pc);
+	end
+	always_ff @(posedge clk) begin
+		// if (ureq.valid) $display("1");
+	end
+	
+	
 endmodule
 `endif

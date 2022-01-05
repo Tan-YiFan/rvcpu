@@ -61,6 +61,10 @@ module rename
 		assign dataR.instr[i].pc = dataD.instr[i].pc;
 		assign dataR.instr[i].jump = dataD.instr[i].jump;
 		assign dataR.instr[i].pcjump = dataD.instr[i].pcjump;
+		// always_comb begin
+		// 	if (dataR.instr[i].pc == 'h80001cf0) $display("%x", dataR.instr[i].psrc1.valid);
+		// end
+		
 	end
 	
 	for (genvar i = 0; i < FETCH_WIDTH ; i++) begin

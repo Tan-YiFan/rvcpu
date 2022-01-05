@@ -63,7 +63,7 @@ module alu_iqueue
 		iq_addr_t id;
 		rob_ptr_t dst;
 	} sel_meta_t;
-	sel_meta_t [QLEN-1:0]sel[$clog2(QLEN):0]/* verilator split_var */;
+	sel_meta_t [$clog2(QLEN):0][QLEN-1:0]sel/* verilator split_var */;
 	for (genvar i = 0; i < QLEN; i++) begin
 		assign sel[0][i].valid = iq_valid(i);
 		assign sel[0][i].id = i;

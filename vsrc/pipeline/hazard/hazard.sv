@@ -45,7 +45,7 @@ module hazard
 	// assign self.flushM = (~self.mult_ok & d_data_ok) | (flush_ex & i_data_ok);
 	// assign self.flushW = ~d_data_ok;
 
-	assign self.stallF = ~i_data_ok | self.rob_full | self.iq_full;
+	assign self.stallF = ~i_data_ok | ((self.rob_full | self.iq_full) && ~self.pd_fail);
 	assign self.stallD = self.rob_full | self.iq_full;
 	assign self.stallR = self.rob_full | self.iq_full;
 	assign self.stallI = self.iq_full;
@@ -58,7 +58,7 @@ module hazard
 	assign self.flushI = self.pd_fail | self.rob_full;
 	assign self.flushS = self.pd_fail | self.iq_full;
 	assign self.flushE = self.pd_fail;
-	assign self.flushC = self.pd_fail;
+	assign self.flushC = d_data_ok & self.pd_fail;
 endmodule
 
 

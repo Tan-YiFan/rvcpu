@@ -13,7 +13,9 @@ package execute_pkg;
 	import commit_pkg::*;
 	typedef struct packed {
 		commit_instr_t [3:0] alu_commit;
-		commit_instr_t [1:0] mem_commit;
+		commit_instr_t [1:0] read_commit;
+		commit_instr_t [1:0] write_commit;
+		commit_instr_t [1:0] uncached_commit;
 		commit_instr_t [0:0] br_commit;
 		commit_instr_t [0:0] mul_commit;
 	} execute_data_t;

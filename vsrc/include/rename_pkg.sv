@@ -28,7 +28,14 @@ package rename_pkg;
             word_t data;
         } alu;
         struct packed {
-			word_t extra;
+			// word_t extra;
+			struct packed {
+				logic [63-1-32-$bits(strobe_t) - $bits(msize_t):0] zero;
+				msize_t msize; // 
+				strobe_t strobe; // 8
+				u32 addr;
+				u1 uncached;
+			} extra;
             word_t data;
         } mem;
         struct packed {
@@ -66,7 +73,7 @@ package rename_pkg;
 
 	typedef struct packed {
 		u1 valid;
-		logic [PREG_NUM/COMMIT_WIDTH-1:0] addr;
+		logic [$clog2(PREG_NUM/COMMIT_WIDTH)-1:0] addr;
 		rob_entry1_t entry;
 	} rob_entry1_write_req;
 

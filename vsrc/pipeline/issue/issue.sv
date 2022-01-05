@@ -4,7 +4,7 @@
 `ifdef VERILATOR
 `include "include/interface.svh"
 `include "pipeline/issue/alu_iqueue.sv"
-`include "pipeline/issue/mem_iqueue.sv"
+`include "pipeline/issue/imem_iqueue.sv"
 `include "pipeline/issue/br_iqueue.sv"
 `include "pipeline/issue/mul_iqueue.sv"
 `else
@@ -22,7 +22,8 @@ module issue
 	wake_intf.issue wake,
 	ready_intf.issue ready,
 	retire_intf.issue retire,
-	hazard_intf.issue hazard
+	hazard_intf.issue hazard,
+	input d_data_ok
 );
 	rename_data_t dataR;
 	issue_data_t dataI;
@@ -43,6 +44,10 @@ module issue
         // assign entry[i].op = dataR.instr[i].op;
         assign entry[i].imm = dataR.instr[i].imm;
         assign entry[i].pc = dataR.instr[i].pc;
+		// always_ff @(posedge clk) begin
+		// 	if (entry[i].pc == 'h80001cf0) $display(entry[i].src1.valid);
+		// end
+		
 	end
 	
 	write_req_t [3:0] w_alu;
@@ -68,6 +73,11 @@ module issue
 	for (genvar i = 0; i < 4; i++) begin
 		assign w_mem[i].valid = dataR.instr[i].valid && dataR.instr[i].ctl.entry_type == ENTRY_MEM;
 		assign w_mem[i].entry = entry[i];
+		always_ff @(posedge clk) begin
+			// if (w_mem[i].valid) $display(dataR.instr[i].pc);
+		end
+		
+		
 	end
 	
 
@@ -116,13 +126,13 @@ module issue
 
 	imem_iqueue #(.QLEN(16)) imem_iqueue_inst (
 		.clk, .reset,
-		.wen(~|full), .stall('0),
+		.wen(~|full), .stall(~d_data_ok),
 		.write(w_mem),
 		.read(r_mem),
 		.full(full[5]),
 		.wake(wake.wake),
 		.retire(wake_retire)
-	)
+	);
 
 	br_iqueue #(.QLEN(4)) br_iqueue_inst (
 		.clk, .reset(reset),
@@ -173,6 +183,25 @@ module issue
 		assign dataI.branch_issue[i].pc = r_br[i].entry.pc; 
 	end
 	
+	for (genvar i = 0; i < 2; i++) begin
+		assign dataI.mem_issue[i].valid = r_mem[i].entry.valid;
+		assign dataI.mem_issue[i].imm = r_mem[i].entry.imm;
+		assign dataI.mem_issue[i].src1 = r_mem[i].entry.src1.id;
+		assign dataI.mem_issue[i].src2 = r_mem[i].entry.src2.id;
+		assign dataI.mem_issue[i].psrc1 = r_mem[i].entry.src1.pid;
+		assign dataI.mem_issue[i].psrc2 = r_mem[i].entry.src2.pid;
+		assign dataI.mem_issue[i].dst = preg_addr_t'(r_mem[i].entry.dst);
+		assign dataI.mem_issue[i].forward_en1 = r_mem[i].entry.src1.forward_en;
+		assign dataI.mem_issue[i].forward_en2 = r_mem[i].entry.src2.forward_en;
+		assign dataI.mem_issue[i].ctl = r_mem[i].entry.ctl;
+		assign dataI.mem_issue[i].pc = r_mem[i].entry.pc;
+		
+		
+	end
+	always_ff @(posedge clk) begin
+		for (int i = 0; i < 2; i++)
+		if (dataI.mem_issue[i].valid) $display("%x %d", dataI.mem_issue[i].pc, dataI.mem_issue[i].imm);
+	end
 
 	for (genvar i = 0; i < FETCH_WIDTH; i++) begin
 		assign ready.psrc1[i] = dataR.instr[i].psrc1.id;

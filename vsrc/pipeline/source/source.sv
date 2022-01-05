@@ -102,6 +102,20 @@ module source
 		assign dataS.branch_source[i].pc = dataI.branch_issue[i].pc;
 	end
 
+	for (genvar i = 0; i < 2; i++) begin
+		assign dataS.mem_source[i].valid = dataI.mem_issue[i].valid;
+		assign dataS.mem_source[i].d1 = rd1[i + 4];
+		assign dataS.mem_source[i].d2 = rd2[i + 4];
+		assign dataS.mem_source[i].imm = dataI.mem_issue[i].imm;
+		assign dataS.mem_source[i].src1 = dataI.mem_issue[i].src1;
+		assign dataS.mem_source[i].src2 = dataI.mem_issue[i].src2;
+		assign dataS.mem_source[i].dst = dataI.mem_issue[i].dst;
+		assign dataS.mem_source[i].forward_en1 = dataI.mem_issue[i].forward_en1;
+		assign dataS.mem_source[i].forward_en2 = dataI.mem_issue[i].forward_en2;
+		assign dataS.mem_source[i].ctl = dataI.mem_issue[i].ctl;
+		assign dataS.mem_source[i].pc = dataI.mem_issue[i].pc;
+	end
+
 	assign csr.ra = 'x;
 	assign dataS.csr = csr.rd;
 

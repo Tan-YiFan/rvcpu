@@ -16,7 +16,10 @@ module execute
 	import source_pkg::*;(
 	input logic clk, reset,
 	ereg_intf.execute ereg,
-	creg_intf.execute creg
+	creg_intf.execute creg,
+	wbuffer_intf.execute wbuffer,
+	output dbus_req_t[1:0] rreq,
+	input dbus_resp_t[1:0] rresp
 	// forward_intf.execute forward
 );
 	source_data_t dataS;
@@ -64,6 +67,22 @@ module execute
 			.extra(bru_extra[i])
 		);
 	end
+
+	
+	
+	memory memory_inst (
+		.clk, .reset,
+		.srcs(dataS.mem_source),
+		.read_commit(dataE.read_commit),
+		.write_commit(dataE.write_commit),
+		.uncached_commit(dataE.uncached_commit),
+
+		.wbuffer_wreq(wbuffer.wreq),
+		.dbus_rreq(rreq),
+		.wbuffer_rreq(wbuffer.rreq),
+		.dbus_rresp(rresp),
+		.wbuffer_rresp(wbuffer.rresp)
+	);
 	
 
 	for (genvar i = 0; i < 4; i++) begin

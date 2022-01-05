@@ -3,10 +3,10 @@
 
 `ifdef VERILATOR
 `include "include/interface.svh"
-`include "include/fetch/bp/comp_2bit.svh"
-`include "include/fetch/bp/jrstack.svh"
+`include "pipeline/fetch/bp/comp_2bit.sv"
+`include "pipeline/fetch/bp/jrstack.sv"
 `else
-// `include "interface.svh"
+`include "interface.svh"
 `endif
 module branchpredict
 	import common::*;(

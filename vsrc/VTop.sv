@@ -19,10 +19,10 @@ module VTop
 
     ibus_req_t  ireq;
     ibus_resp_t iresp;
-    dbus_req_t  dreq;
-    dbus_resp_t dresp;
-    cbus_req_t  icreq,  dcreq;
-    cbus_resp_t icresp, dcresp;
+    dbus_req_t  [1:0] dreq;
+    dbus_resp_t [1:0] dresp;
+    cbus_req_t  icreq,  dcreq, ureq;
+    cbus_resp_t icresp, dcresp, uresp;
 
     core core(.*);
 	if (USE_ICACHE == 0)
@@ -37,9 +37,11 @@ module VTop
     /**
      * TODO (Lab2) replace mux with your own arbiter :)
      */
-    CBusArbiter mux(
-        .ireqs({icreq, dcreq}),
-        .iresps({icresp, dcresp}),
+    CBusArbiter #(
+		.NUM_INPUTS(3)
+	) mux(
+        .ireqs({icreq, dcreq, ureq}),
+        .iresps({icresp, dcresp, uresp}),
         .*
     );
 

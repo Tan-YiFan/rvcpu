@@ -30,7 +30,7 @@ module RAM_SimpleDualPort #(
     input  rview_t   wdata,
     output rword_t   rdata
 );
-	/* verilator tracing_off */
+
 `ifdef VERILATOR
 	rview_t mem [NUM_WORDS-1:0];
 	initial begin

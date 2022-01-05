@@ -2,14 +2,17 @@
 `define __MEMORY_SV
 
 `ifdef VERILATOR
-
+`include "include/common.sv"
+`include "pipeline/memory/writedata.sv"
+`include "pipeline/memory/readdata.sv"
 `else
 
 `endif
 
 module memory 
-	import common::*;#(
-	parameter QLEN = 4
+	import common::*;
+	import commit_pkg::*;#(
+	parameter QLEN = 16
 )(
 	input logic clk, reset,
 	input source_instr_t[2-1:0] srcs,
@@ -27,7 +30,7 @@ module memory
 	output wbuffer_rreq_t[RMEM_WIDTH-1:0] wbuffer_rreq,
 
 	/* Reply from DBus */
-	output dbus_resp_t[RMEM_WIDTH-1:0] dbus_rresp,
+	input dbus_resp_t[RMEM_WIDTH-1:0] dbus_rresp,
 
 	/* Reply from WriteBuffer */
 	input wbuffer_rresp_t[RMEM_WIDTH-1:0] wbuffer_rresp
@@ -76,8 +79,15 @@ module memory
 			uncached commit */
 	u1[1:0] is_uncached;
 	u32[1:0] addr;
-	u64[1:0] writedata;
+	u64[1:0] wd;
 	strobe_t [1:0] strobe;
+	for (genvar i = 0; i < 2; i++) begin
+		always_ff @(posedge clk) begin
+			if (srcs[i].valid && addr[i] == 'h80003754) $display("%x %x %x", srcs[i].pc, srcs[i].d1, srcs[i].imm);
+		end
+		
+	end
+	
 
 	/* Address Generation */
 	for (genvar i = 0; i < 2; i++) begin
@@ -90,7 +100,7 @@ module memory
 			.addr(addr[i][2:0]),
 			._wd(srcs[i].d2),
 			.msize(srcs[i].ctl.msize),
-			.wd(writedata[i]),
+			.wd(wd[i]),
 			.strobe(strobe[i])
 		);
 	end
@@ -107,11 +117,15 @@ module memory
 		assign mpipe12_pre[i].read = srcs[i].ctl.memread;
 		assign mpipe12_pre[i].write = srcs[i].ctl.memwrite;
 		assign mpipe12_pre[i].addr = addr[i];
-		assign mpipe12_pre[i].data = writedata[i];
+		assign mpipe12_pre[i].data = wd[i];
 		assign mpipe12_pre[i].dst = srcs[i].dst;
-		assign mpipe12_pre[i].msize = srcs[i].ctl.msize
+		assign mpipe12_pre[i].msize = srcs[i].ctl.msize;
 		assign mpipe12_pre[i].strobe = strobe[i];
 		assign mpipe12_pre[i].mem_unsigned = srcs[i].ctl.mem_unsigned;
+		always_ff @(posedge clk) begin
+			// if (mpipe12_pre[i].write && srcs[i].pc == 32'h80002664) $display("%x %x", srcs[i].d1, srcs[i].pc);
+		end
+		
 	end
 	
 	mpipe12_t  [2-1:0] mpipe12_o, mpipe12, mpipe12_nxt;
@@ -124,22 +138,22 @@ module memory
 		.data_o(mpipe12_o),
 		.empty(empty),
 		.full(),
-		.wen(),
-		.ren()
+		.wen((~empty | ~dbus_rresp[0].data_ok | ~dbus_rresp[1].data_ok) && (mpipe12_pre[0].valid || mpipe12_pre[1].valid)),
+		.ren(dbus_rresp[0].data_ok && dbus_rresp[1].data_ok)
 	);
 	// Stage 1->2 Pipeline / uncached commit
 	for (genvar i = 0; i < 2; i++) begin
 		// uncached commit
 		assign uncached_commit[i].valid = srcs[i].valid & is_uncached[i];
-		assign uncached_commit[i].data = writedata[i];
-		assign uncached_commit[i].extra = 'x;
+		assign uncached_commit[i].data = wd[i];
+		assign uncached_commit[i].extra = {srcs[i].ctl.msize, strobe[i], addr[i], 1'b1};
 		assign uncached_commit[i].dst = srcs[i].dst;
 
 		always_ff @(posedge clk) begin
 			if (reset) begin
 				mpipe12[i].valid <= '0;
-			end else if (???) begin
-				mpipe12 <= mpipe12_nxt;
+			end else if (dbus_rresp[0].data_ok && dbus_rresp[1].data_ok) begin
+				mpipe12[i] <= mpipe12_nxt[i];
 			end
 		end
 	end
@@ -149,19 +163,29 @@ module memory
 
 	for (genvar i = 0; i < WMEM_WIDTH; i++) begin
 		assign wbuffer_wreq[i].valid =
-		mpipe12[i].valid && mpipe12[i].write && dbus_rresp[0].valid && dbus_rresp[1].valid;
+		mpipe12[i].valid && mpipe12[i].write && dbus_rresp[0].data_ok && dbus_rresp[1].data_ok;
 		assign wbuffer_wreq[i].msize = mpipe12[i].msize;
 		assign wbuffer_wreq[i].strobe = mpipe12[i].strobe;
 		assign wbuffer_wreq[i].addr = mpipe12[i].addr;
 		assign wbuffer_wreq[i].data = mpipe12[i].data;
+		always_ff @(posedge clk) begin
+			if (wbuffer_wreq[i].valid) begin
+				$display("addr%x", wbuffer_wreq[i].addr);
+			end
+		end
+		
+		always_ff @(posedge clk) begin
+			// if (wbuffer_wreq[i].valid) $display("%x", wbuffer_wreq[i].addr);
+		end
+		
 	end
 	
 
 	for (genvar i = 0; i < WMEM_WIDTH; i++) begin
 		assign write_commit[i].valid =
-		mpipe12[i].valid && mpipe12[i].write && dbus_rresp[0].valid && dbus_rresp[1].valid;
+		mpipe12[i].valid && mpipe12[i].write && dbus_rresp[0].data_ok && dbus_rresp[1].data_ok;
 		assign write_commit[i].data = 'x;
-		assign write_commit[i].extra = 'x;
+		assign write_commit[i].extra = '0;
 		assign write_commit[i].dst = mpipe12[i].dst;
 	end
 	
@@ -182,7 +206,7 @@ module memory
 	
 	mpipe23_t [RMEM_WIDTH-1:0] mpipe23, mpipe23_nxt;
 	for (genvar i = 0; i < RMEM_WIDTH; i++) begin
-		assign mpipe23_nxt[i].valid = mpipe12[i].valid;
+		assign mpipe23_nxt[i].valid = mpipe12[i].valid && dbus_rresp[0].data_ok && dbus_rresp[1].data_ok;
 		assign mpipe23_nxt[i].addr_off = mpipe12[i].addr[2:0];
 		assign mpipe23_nxt[i].dst = mpipe12[i].dst;
 		assign mpipe23_nxt[i].msize = mpipe12[i].msize;
@@ -194,8 +218,8 @@ module memory
 		assign mpipe23_nxt[i].mem_unsigned = mpipe12[i].mem_unsigned;
 
 		always_ff @(posedge clk) begin
-			if (reset | ???) begin
-				mpipe23[i].valid = '0;
+			if (reset | 0 /* TODO */) begin
+				mpipe23[i].valid <= '0;
 			end else begin
 				mpipe23[i] <= mpipe23_nxt[i];
 			end
@@ -208,12 +232,12 @@ module memory
 
 	for (genvar i = 0; i < RMEM_WIDTH; i++) begin
 		assign mpipe34_nxt[i].valid = mpipe23[i].valid;
-		assign mpipe34_nxt[i].addr_off = mpipe12[i].addr_off[2:0];
+		assign mpipe34_nxt[i].addr_off = mpipe12[i].addr[2:0];
 		assign mpipe34_nxt[i].dst = mpipe23[i].dst;
 		assign mpipe34_nxt[i].msize = mpipe23[i].msize;
 		// assign mpipe34_nxt[i].wbuffer_rresp = ;
 		assign mpipe34_nxt[i].wbuffer_rresp.valid = 
-		mpipe_23[i].wbuffer_rresp.valid | mpipe23[i].prev.valid;
+		mpipe23[i].wbuffer_rresp.valid | mpipe23[i].prev.valid;
 		for (genvar j = 0; j < 8; j++) begin
 			assign mpipe34_nxt[i].wbuffer_rresp.data[i] =
 			mpipe23[i].prev.valid[i] ? 
@@ -223,8 +247,8 @@ module memory
 		assign mpipe34_nxt[i].mem_unsigned = mpipe23[i].mem_unsigned;
 
 		always_ff @(posedge clk) begin
-			if (reset | ???) begin
-				mpipe34[i].valid = '0;
+			if (reset | 0 /* TODO */) begin
+				mpipe34[i].valid <= '0;
 			end else begin
 				mpipe34[i] <= mpipe34_nxt[i];
 			end
@@ -253,7 +277,7 @@ module memory
 		);
 		assign read_commit[i].valid = mpipe34[i].valid;
 		assign read_commit[i].data = rdata[i];
-		assign read_commit[i].extra = 'x;
+		assign read_commit[i].extra = '0;
 		assign read_commit[i].dst = mpipe34[i].dst;
 	end
 	

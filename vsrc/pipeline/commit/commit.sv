@@ -24,25 +24,88 @@ module commit
 		valid = '0;
 		write = 'x;
 		// alu
-		for (int i = 0; i < 4; i++) begin
-			if (dataE.alu_commit[i].valid) begin
-				// `ASSERT(valid[u2'(dataE.alu_commit[i].dst)][0] == 1'b0);
-				valid[u2'(dataE.alu_commit[i].dst)][0] = 1'b1;
-				write[u2'(dataE.alu_commit[i].dst)][0] = dataE.alu_commit[i];
+		// for (int i = 0; i < 4; i++) begin
+		// 	if (dataE.alu_commit[i].valid) begin
+		// 		// `ASSERT(valid[u2'(dataE.alu_commit[i].dst)][0] == 1'b0);
+		// 		valid[u2'(dataE.alu_commit[i].dst)][0] = 1'b1;
+		// 		write[u2'(dataE.alu_commit[i].dst)][0] = dataE.alu_commit[i];
+		// 	end
+		// end
+		for (int i = 0; i < 2; i++) begin
+			if (dataE.read_commit[i].valid) begin
+				valid[u2'(dataE.read_commit[i].dst)][i + 0] = 1'b1;
+				write[u2'(dataE.read_commit[i].dst)][i + 0] = dataE.read_commit[i];
 			end
 		end
+
+		for (int i = 0; i < 2; i++) begin
+			if (dataE.write_commit[i].valid) begin
+				valid[u2'(dataE.write_commit[i].dst)][i + 2] = 1'b1;
+				write[u2'(dataE.write_commit[i].dst)][i + 2] = dataE.write_commit[i];
+			end
+		end
+
+		for (int i = 0; i < 2; i++) begin
+			if (dataE.uncached_commit[i].valid) begin
+				valid[u2'(dataE.uncached_commit[i].dst)][i + 4] = 1'b1;
+				write[u2'(dataE.uncached_commit[i].dst)][i + 4] = dataE.uncached_commit[i];
+			end
+		end
+		
 		for (int i = 0; i < 1; i++) begin
 			if (dataE.br_commit[i].valid) begin
-				valid[u2'(dataE.br_commit[i].dst)][1] = 1'b1;
-				write[u2'(dataE.br_commit[i].dst)][1] = dataE.br_commit[i];
+				valid[u2'(dataE.br_commit[i].dst)][6] = 1'b1;
+				write[u2'(dataE.br_commit[i].dst)][6] = dataE.br_commit[i];
 			end
 		end
 		
 	end
-	
+	for (genvar i = 0; i < 2; i++) begin
+		always_ff @(posedge clk) begin
+			if (dataE.write_commit[i].valid) $display("write commut %x", dataE.write_commit[i].dst);	
+		end
+		
+		
+	end
 	
 
+	always_ff @(posedge clk) begin
+		if (dataE.br_commit[0].valid) begin
+			// $display("%x", dataE.br_commit[0].extra);
+		end
+		// 8000266c
+	end
+	
+	always_ff @(posedge clk) begin
+		// if (self.valid[3]) $display(self.instr[3].dst);
+	end
+	
 	for (genvar i = 0; i < COMMIT_WIDTH; i++) begin
+		commit_instr_t q;
+		u1 chosen;
+		u1 read_valid;
+		// assign self.instr[i] = dataE.alu_commit[i].valid ? dataE.alu_commit[i] : q;
+		always_comb begin
+			self.instr[i] = q;
+			self.valid[i] = read_valid && q.valid;
+			chosen = '0;
+			for (int j = 0; j < 4; j++) begin
+				if (dataE.alu_commit[j].valid && dataE.alu_commit[j].dst[1:0] == i) begin
+					self.instr[i] = dataE.alu_commit[j];
+					chosen = '1;
+					self.valid[i] = '1;
+				end
+			end
+			
+		end
+		
+		
+		// always_ff @(posedge clk) begin
+		// 	if (dataE.alu_commit[i].valid) begin
+		// 		$display("1");
+		// 	end
+		// end
+		
 		fifo_mw1r #(
 			.QLEN(16),
 			.TYPE(logic[$bits(commit_instr_t)-1:0]),
@@ -51,8 +114,9 @@ module commit
 			.clk, .reset,
 			.valid(valid[i]),
 			.write(write[i]),
-			.read_valid(self.valid[i]),
-			.read(self.instr[i])
+			.stall(chosen),
+			.read_valid(read_valid),
+			.read(q)
 		);
 	end
 	
@@ -67,6 +131,13 @@ module commit
 		// 	$display("%x", self.instr[0].dst);
 		// end
 	end
+	// for (genvar i = 0; i < 4; i++) begin
+	// 	always_ff @(posedge clk) begin
+	// 		if (dataE.alu_commit[i].valid)
+	// 			$display()
+	// 	end
+		
+	// end
 	
 	
 	assign dataE = creg.dataE;
@@ -84,6 +155,7 @@ module fifo_mw1r
 	input logic clk, reset,
 	input logic[WNUM-1:0] valid,
 	input TYPE [WNUM-1:0] write,
+	input logic stall,
 	output logic read_valid,
 	output TYPE read
 );
@@ -136,7 +208,7 @@ module fifo_mw1r
 			assign reads[i] = data[i][bank_offset(h)];
 		end
 		assign read = reads[bank(h)];
-		assign read_valid = h != t[0];
+		assign read_valid = (h != t[0] && ~stall);
 		
 		// assign read = data[bank(h)][bank_offset(h)];
 		assign h_nxt = h + read_valid;

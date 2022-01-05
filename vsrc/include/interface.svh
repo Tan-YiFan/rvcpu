@@ -38,7 +38,7 @@ interface pcselect_intf();
 endinterface
 
 interface freg_intf();
-	u64 pc, pc_nxt;
+	u32 pc, pc_nxt;
 
 	modport pcselect(output pc_nxt);
 	modport freg(output pc, input pc_nxt);
@@ -201,7 +201,7 @@ interface bp_intf();
 		output pred_taken, pc_ret
 	);
 
-	modport commit (
+	modport rob (
 		output pc_update, valid, taken
 	);
 
@@ -245,6 +245,7 @@ interface retire_intf();
         creg_addr_t dst;
         preg_addr_t preg;
 		pc_t pc;
+		u1 uncached;
     } [COMMIT_WIDTH-1:0]retire;
 	modport rat(
         input retire
@@ -307,7 +308,7 @@ interface wbuffer_intf();
 	/* Commit */
 	wbuffer_creq_t [WMEM_WIDTH-1:0] creq;
 
-	modport memory(
+	modport execute(
 		output rreq, wreq,
 		input rresp
 	);
@@ -317,7 +318,7 @@ interface wbuffer_intf();
 		output rresp
 	);
 
-	modport commit(
+	modport rob(
 		output creq
 	);
 endinterface

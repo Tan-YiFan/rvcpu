@@ -20,7 +20,7 @@ module ICache
 	localparam NUM_LINES = 2 ** INDEX_BITS;
 	localparam TAG_WIDTH = 28 - OFFSET_BITS - INDEX_BITS;
 	localparam META_WIDTH = TAG_WIDTH + 1;
-	localparam BINFO_WIDTH = PC_WIDTH + 2;
+	localparam BINFO_WIDTH = PC_WIDTH + 3;
 
 	localparam type state_t = enum u1 {
 		INIT = '0,

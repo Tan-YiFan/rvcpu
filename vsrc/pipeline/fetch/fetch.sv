@@ -15,7 +15,8 @@ module fetch
 	freg_intf.fetch freg,
 	dreg_intf.fetch dreg,
 	output u64 pc,
-	input ibus_resp_t iresp
+	input ibus_resp_t iresp,
+	bp_intf.fetch bp
 );
 	fetch_data_t dataF;
 	assign pc = freg.pc;

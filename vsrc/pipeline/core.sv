@@ -6,7 +6,7 @@
 `include "pipeline/fetch/fetch.sv"
 `include "pipeline/decode/decode.sv"
 `include "pipeline/execute/execute.sv"
-// `include "pipeline/memory/memory.sv"
+`include "pipeline/memory/memory.sv"
 // `include "pipeline/writeback/writeback.sv"
 
 // `include "pipeline/forward/forward.sv"
@@ -20,6 +20,9 @@
 `include "pipeline/issue/issue.sv"
 `include "pipeline/source/source.sv"
 `include "pipeline/commit/commit.sv"
+`include "pipeline/memory/wbuffer.sv"
+`include "pipeline/fetch/bp/branchpredict.sv"
+`include "util/SimpleArbiter.sv"
 
 `else
 `include "interface.svh"
@@ -35,8 +38,11 @@ module core
 	input logic clk, reset,
 	output ibus_req_t  ireq,
 	input  ibus_resp_t iresp,
-	output dbus_req_t  dreq,
-	input  dbus_resp_t dresp
+	output dbus_req_t[1:0]  dreq,
+	input  dbus_resp_t[1:0] dresp,
+
+	output cbus_req_t ureq,
+	input cbus_resp_t uresp
 );
 
 	u64 pc;
@@ -60,34 +66,15 @@ module core
 	commit_intf commit_intf();
 	wake_intf wake_intf();
 	ready_intf ready_intf();
+	wbuffer_intf wbuffer_intf();
+	bp_intf bp_intf();
 
-	mread_req mread;
-	mwrite_req mwrite;
-	u64 imin, imax;
-	u64 dmin, dmax;
-	always_ff @(posedge clk) begin
-		if (reset) begin
-			// imin <= 64'h8000_0000;
-			// imax <= 64'h8000_0000;
-			dmin <= 64'h8010_0000;
-			dmax <= 64'h8000_0000;
-		end else begin
-			// if (ireq.addr[31]) begin
-			// 	if (ireq.addr < imin) imin <= ireq.addr;
-			// 	if (ireq.addr > imax) imax <= ireq.addr;
-			// end
-			if (dreq.addr[31:28] == 4'd8 && dreq.valid) begin
-				// if (dreq.addr < dmin) dmin <= dreq.addr;
-				// if (dreq.addr > dmax) begin
-					// dmax <= dreq.addr;
-					// #1 $display("dmin %x, dmax %x", dmin, dmax);
-				// end
-			end
-			// if (ireq.addr == 64'h8000478c) $display("imin %x, imax %x, dmin %x, dmax %x", imin, imax, dmin, dmax);
-		end
-	end
-	
-
+	// mread_req mread;
+	// mwrite_req mwrite;
+	dbus_req_t [RMEM_WIDTH-1:0] rreq;
+	dbus_resp_t [RMEM_WIDTH-1:0] rresp;
+	dbus_req_t [WMEM_WIDTH-1:0] wreq;
+	dbus_resp_t [WMEM_WIDTH-1:0] wresp;
 
 	assign ireq.addr = pc;
 	assign ireq.valid = 1'b1;
@@ -95,11 +82,21 @@ module core
 		// if (~reset) $display("pc %x", pc);
 	end
 	
-	assign dreq.valid = mread.valid | mwrite.valid;
-	assign dreq.addr = mwrite.valid ? mwrite.addr : mread.addr;
-	assign dreq.size = mwrite.valid ? mwrite.size : mread.size;
-	assign dreq.data = mwrite.data;
-	assign dreq.strobe = mwrite.valid ? mwrite.strobe : '0;
+	// assign dreq.valid = mread.valid | mwrite.valid;
+	// assign dreq.addr = mwrite.valid ? mwrite.addr : mread.addr;
+	// assign dreq.size = mwrite.valid ? mwrite.size : mread.size;
+	// assign dreq.data = mwrite.data;
+	// assign dreq.strobe = mwrite.valid ? mwrite.strobe : '0;
+	SimpleArbiter sc (
+		.clk, .reset,
+		.rreq,
+		.wreq,
+		.dresp(dresp),
+
+		.dreq(dreq),
+		.rresp,
+		.wresp
+	);
 	pcselect pcselect(
 		.self(pcselect_intf.pcselect),
 		.freg(freg_intf.pcselect)
@@ -110,7 +107,8 @@ module core
 		.pc(pc),
 		.pcselect(pcselect_intf.fetch),
 		.freg(freg_intf.fetch),
-		.dreg(dreg_intf.fetch)
+		.dreg(dreg_intf.fetch),
+		.bp(bp_intf.fetch)
 	);
 
 	decode decode(
@@ -132,7 +130,8 @@ module core
 		.wake(wake_intf.issue),
 		.ready(ready_intf.issue),
 		.retire(retire_intf.issue),
-		.hazard(hazard_intf.issue)
+		.hazard(hazard_intf.issue),
+		.d_data_ok((dresp[0].data_ok || ~dreq[0].valid) && (dresp[1].data_ok || ~dreq[1].valid))
 	);
 
 	source source (
@@ -145,7 +144,10 @@ module core
 	execute execute(
 		.clk, .reset(reset | hazard_intf.flushC),
 		.ereg(ereg_intf.execute),
-		.creg(creg_intf.execute)
+		.creg(creg_intf.execute),
+		.wbuffer(wbuffer_intf.execute),
+		.rreq,
+		.rresp
 	);
 
 	commit commit (
@@ -181,7 +183,7 @@ module core
 	hazard hazard (
         	.self(hazard_intf.hazard),
 		.i_data_ok(iresp.data_ok),
-		.d_data_ok(dresp.data_ok | ~dreq.valid)
+		.d_data_ok((dresp[0].data_ok || ~dreq[0].valid) && (dresp[1].data_ok || ~dreq[1].valid))
 	);
 	// forward forward(
 	// 	.self(forward_intf.forward)
@@ -201,7 +203,12 @@ module core
 		.pcselect(pcselect_intf.rob),
 		.ready(ready_intf.rob),
 		.wake(wake_intf.rob),
-		.source(source_intf.rob)
+		.source(source_intf.rob),
+		.bp(bp_intf.rob),
+		.wbuffer(wbuffer_intf.rob),
+		.dresp(wresp),
+		.ureq,
+		.uresp
 	);
 
 	rat rat (
@@ -266,6 +273,18 @@ module core
 		.en(~hazard_intf.stallC)
 	);
 
+	wbuffer_module wbuffer_inst (
+		.clk, .reset(reset | hazard_intf.flushC),
+		.self(wbuffer_intf.wbuffer),
+		.oreq(wreq),
+		.oresp(wresp)
+	);
+
+	branchpredict branchpredict (
+		.clk, .reset,
+		.self(bp_intf.bp)
+	);
+
 `ifdef VERILATOR
 	// u1 commit_valid;
 	// assign commit_valid = writeback.pc[31:28] == 4'd8;
@@ -291,7 +310,7 @@ module core
 			.valid              (retire_intf.retire[i].valid),
 			.pc                 (retire_intf.retire[i].pc),
 			.instr              (0),
-			.skip               (0),
+			.skip               (/* retire_intf.retire[i].uncached */retire_intf.retire[i].pc == 'h80002684),
 			.isRVC              (0),
 			.scFailed           (0),
 			.wen                (retire_intf.retire[i].ctl.regwrite),
