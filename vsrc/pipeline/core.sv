@@ -208,7 +208,8 @@ module core
 		.wbuffer(wbuffer_intf.rob),
 		.dresp(wresp),
 		.ureq,
-		.uresp
+		.uresp,
+		.d_data_ok((dresp[0].data_ok || ~dreq[0].valid) && (dresp[1].data_ok || ~dreq[1].valid))
 	);
 
 	rat rat (

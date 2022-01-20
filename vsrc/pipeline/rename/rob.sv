@@ -25,7 +25,8 @@ module rob
 
 	input dbus_resp_t[WMEM_WIDTH-1:0] dresp,
 	output cbus_req_t ureq,
-	input cbus_resp_t uresp
+	input cbus_resp_t uresp,
+	input d_data_ok
 );
 	// h: read in commit; t: write in rename
 	rob_ptr_t h[COMMIT_WIDTH-1:0], t[FETCH_WIDTH-1:0], h_nxt, t_nxt;
@@ -179,6 +180,7 @@ module rob
 		v_retire[0] = c[preg_addr_t'(h[0])]
 					&& h[0] != t[0]
 					&& ~(r1[bank(h[0])][0].ctl.entry_type == ENTRY_MEM && r2[bank(h[0])][0].data.mem.extra.uncached && ~uresp.last)
+					&& d_data_ok
 					;
 		if (ureq.valid) begin
 			v_retire[0] = v_retire[0] && uresp.ready;
