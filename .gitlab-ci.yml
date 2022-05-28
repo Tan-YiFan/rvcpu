@@ -13,7 +13,7 @@ variables:
 default:
   image: gitlab.agileserve.org.cn:15050/liushiqi/xs-env:v2.0
   tags: 
-    - k8s
+    - k8s-client
 
 scala_check:
   stage: chk_scala
