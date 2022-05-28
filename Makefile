@@ -17,7 +17,7 @@ endif
 build/SimTop.v: $(SCALA_FILE)
 	mkdir -p build
 ifeq ($(SCALA_CODE), "true")
-	mill chiselModule.runMain $(SCALA_OPTS)
+	#mill chiselModule.runMain $(SCALA_OPTS)
 endif
 	cp -r vsrc/* build
 
