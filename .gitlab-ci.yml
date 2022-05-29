@@ -166,7 +166,7 @@ fpga_dhrystone:
 fpga_microbench:
   stage: fpga_eval
   tags:
-    - nf_xvc
+    -  nj-nfv3-ucas-cod
   script:
     - mkdir -p build
     - chmod +x scripts/fpga_run.sh
